@@ -67,8 +67,13 @@ def _tokenize(text: str) -> set[str]:
 class HybridRetriever:
     """Retrieves relevant tables, canonical metrics, and few-shot examples with relational graph expansion."""
 
-    def __init__(self, catalog: MetadataCatalog) -> None:
+    def __init__(
+        self,
+        catalog: MetadataCatalog,
+        playbooks_path: Path | str = Path("data/playbooks/saved_playbooks.json"),
+    ) -> None:
         self.catalog = catalog
+        self.playbooks_path = Path(playbooks_path)
         self._graph = self._build_join_graph()
 
     def _canonical_table_name(self, name: str) -> str:
@@ -308,7 +313,7 @@ class HybridRetriever:
 
         return selected_metrics
 
-    def _rank_few_shot_examples(
+    def _select_few_shot(
         self,
         question: str,
         resolved_metric_id: str | None,
@@ -320,11 +325,11 @@ class HybridRetriever:
         selected_table_names = {t.table_name for t in selected_tables}
 
         # Gather candidate examples
-        candidates = list(self.catalog.few_shot_examples)
+        candidates: list[FewShotExample] = list(self.catalog.few_shot_examples)
 
         # Load playbooks if present
-        if include_user_playbooks:
-            playbook_path = Path("data/playbooks/saved_playbooks.json")
+        if include_user_playbooks and self.playbooks_path:
+            playbook_path = Path(self.playbooks_path)
             if playbook_path.exists():
                 try:
                     with open(playbook_path, "r", encoding="utf-8") as f:
@@ -332,15 +337,19 @@ class HybridRetriever:
                         if isinstance(pb_data, list):
                             for pb in pb_data:
                                 if isinstance(pb, dict):
+                                    q = pb.get("question", "")
+                                    res_id = pb.get("resolved_metric_id")
+                                    indexed_q = f"{q} [Critério: {res_id}]" if res_id else q
                                     candidates.append(
                                         FewShotExample(
                                             id=pb.get("id", ""),
-                                            question=pb.get("question", ""),
-                                            sql=pb.get("sanitized_sql", ""),
-                                            resolved_metric_id=pb.get("resolved_metric_id"),
-                                            tables_used=pb.get("used_tables", []),
-                                            explanation="Saved User Playbook",
+                                            question=indexed_q,
+                                            sql=pb.get("sanitized_sql", "") or pb.get("sql_query", ""),
+                                            resolved_metric_id=res_id,
+                                            tables_used=pb.get("used_tables", []) or pb.get("tables_used", []),
+                                            explanation=pb.get("title", "Saved User Playbook"),
                                             origin="saved_playbook",
+                                            source="saved_playbook",
                                         )
                                     )
                 except (json.JSONDecodeError, OSError, KeyError, TypeError, AttributeError) as exc:
@@ -366,6 +375,7 @@ class HybridRetriever:
 
             total_score = round(jaccard + metric_bonus + table_bonus, 3)
             origin = getattr(ex, "origin", "curated")
+            source = "saved_playbook" if origin == "saved_playbook" else "static_few_shot"
             info = RetrievedExampleInfo(
                 id=ex.id,
                 question=ex.question,
@@ -373,11 +383,14 @@ class HybridRetriever:
                 similarity_score=total_score,
                 resolved_metric_id=ex.resolved_metric_id,
                 origin=origin,
+                source=source,
             )
             scored_examples.append((info, total_score))
 
         scored_examples.sort(key=lambda x: x[1], reverse=True)
         return [item[0] for item in scored_examples[:top_k_examples]]
+
+    _rank_few_shot_examples = _select_few_shot
 
     def retrieve(
         self,
@@ -424,7 +437,7 @@ class HybridRetriever:
             resolved_metric_id = selected_metrics[0].metric_id
 
         # 3. Select few-shot examples
-        few_shot_examples = self._rank_few_shot_examples(
+        few_shot_examples = self._select_few_shot(
             question=question,
             resolved_metric_id=resolved_metric_id,
             selected_tables=selected_tables,

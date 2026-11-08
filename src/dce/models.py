@@ -46,6 +46,32 @@ class RetrievedExampleInfo(BaseModel):
     similarity_score: float = 0.0
     resolved_metric_id: str | None = None
     origin: str = "curated"
+    source: str = "static_few_shot"
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_source_origin(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "source" in data and "origin" not in data:
+                if data["source"] == "saved_playbook":
+                    data["origin"] = "saved_playbook"
+                elif data["source"] == "static_few_shot":
+                    data["origin"] = "curated"
+                else:
+                    data["origin"] = data["source"]
+            elif "origin" in data and "source" not in data:
+                if data["origin"] == "saved_playbook":
+                    data["source"] = "saved_playbook"
+                elif data["origin"] == "curated":
+                    data["source"] = "static_few_shot"
+                else:
+                    data["source"] = data["origin"]
+            elif "origin" in data and "source" in data:
+                if data["origin"] == "saved_playbook" and data.get("source") != "saved_playbook":
+                    data["source"] = "saved_playbook"
+                elif data["source"] == "saved_playbook" and data.get("origin") != "saved_playbook":
+                    data["origin"] = "saved_playbook"
+        return data
 
 
 class SelectedTableInfo(BaseModel):
@@ -88,6 +114,19 @@ class RetrievalBundle(BaseModel):
     selected_metrics: list[SelectedMetricInfo] = Field(default_factory=list)
     few_shot_examples: list[RetrievedExampleInfo] = Field(default_factory=list)
     resolved_metric_id: str | None = None
+
+    @property
+    def retrieved_examples(self) -> list[RetrievedExampleInfo]:
+        return self.few_shot_examples
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_retrieved_examples(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "retrieved_examples" in data:
+            if "few_shot_examples" not in data:
+                data["few_shot_examples"] = data["retrieved_examples"]
+            del data["retrieved_examples"]
+        return data
 
 
 class ContextInspectionReport(BaseModel):
@@ -200,10 +239,31 @@ class SavedPlaybook(BaseModel):
     id: str
     title: str
     question: str
-    sanitized_sql: str
+    sql_query: str = ""
+    sanitized_sql: str = ""
     resolved_metric_id: str | None = None
+    tables_used: list[str] = Field(default_factory=list)
     used_tables: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
     created_at: str = ""
+    verified: bool = True
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_playbook_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            # sql_query <-> sanitized_sql
+            if data.get("sql_query") and not data.get("sanitized_sql"):
+                data["sanitized_sql"] = data["sql_query"]
+            elif data.get("sanitized_sql") and not data.get("sql_query"):
+                data["sql_query"] = data["sanitized_sql"]
+
+            # tables_used <-> used_tables
+            if data.get("tables_used") and not data.get("used_tables"):
+                data["used_tables"] = data["tables_used"]
+            elif data.get("used_tables") and not data.get("tables_used"):
+                data["tables_used"] = data["used_tables"]
+        return data
 
 
 class ColumnMetadata(BaseModel):
@@ -274,6 +334,32 @@ class FewShotExample(BaseModel):
     tables_used: list[str] = Field(default_factory=list)
     explanation: str = ""
     origin: str = "curated"
+    source: str = "static_few_shot"
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_source_origin(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "source" in data and "origin" not in data:
+                if data["source"] == "saved_playbook":
+                    data["origin"] = "saved_playbook"
+                elif data["source"] == "static_few_shot":
+                    data["origin"] = "curated"
+                else:
+                    data["origin"] = data["source"]
+            elif "origin" in data and "source" not in data:
+                if data["origin"] == "saved_playbook":
+                    data["source"] = "saved_playbook"
+                elif data["origin"] == "curated":
+                    data["source"] = "static_few_shot"
+                else:
+                    data["source"] = data["origin"]
+            elif "origin" in data and "source" in data:
+                if data["origin"] == "saved_playbook" and data.get("source") != "saved_playbook":
+                    data["source"] = "saved_playbook"
+                elif data["source"] == "saved_playbook" and data.get("origin") != "saved_playbook":
+                    data["origin"] = "saved_playbook"
+        return data
 
 
 class MetadataCatalog(BaseModel):
