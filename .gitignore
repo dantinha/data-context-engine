@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Data & Database (Zero commit of raw local databases)
+*.duckdb
+*.duckdb.wal
+data/raw/
+data/processed/
+!data/sample/
+
+# LanceDB vector storage
+.lancedb/
+lancedb_data/
+
+# dbt artifacts
+dbt_packages/
+logs/
+target/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Testing & Tool caches
+.pytest_cache/
+.ruff_cache/
+.superpowers/
+
+# Secrets & Environment variables
+.env
+*.local
+credentials.json
