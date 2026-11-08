@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ContextLevel(str, Enum):
@@ -20,10 +20,23 @@ class ClarificationOption(BaseModel):
 
 
 class ClarificationRequest(BaseModel):
-    is_ambiguous: bool
+    needs_clarification: bool = False
+    is_ambiguous: bool = False
     ambiguity_group_id: str | None = None
     question: str
+    message: str = ""
     options: list[ClarificationOption] = Field(default_factory=list)
+    resolved_metric_id: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_ambiguity(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "is_ambiguous" in data and "needs_clarification" not in data:
+                data["needs_clarification"] = data["is_ambiguous"]
+            elif "needs_clarification" in data and "is_ambiguous" not in data:
+                data["is_ambiguous"] = data["needs_clarification"]
+        return data
 
 
 class RetrievedExampleInfo(BaseModel):
@@ -37,9 +50,27 @@ class RetrievedExampleInfo(BaseModel):
 
 class SelectedTableInfo(BaseModel):
     table_name: str
-    schema_name: str
-    columns: list[str] = Field(default_factory=list)
+    schema_name: str = "marts"
+    selection_type: str = "direct_match"  # "direct_match" | "graph_bridge" | "baseline_dump"
+    reason: str = ""
     retrieval_reason: str = ""
+    relevance_score: float = 1.0
+    columns_included: list[str] = Field(default_factory=list)
+    columns: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_table_info(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "columns" in data and "columns_included" not in data:
+                data["columns_included"] = data["columns"]
+            elif "columns_included" in data and "columns" not in data:
+                data["columns"] = data["columns_included"]
+            if "reason" in data and "retrieval_reason" not in data:
+                data["retrieval_reason"] = data["reason"]
+            elif "retrieval_reason" in data and "reason" not in data:
+                data["reason"] = data["retrieval_reason"]
+        return data
 
 
 class SelectedMetricInfo(BaseModel):
@@ -47,6 +78,16 @@ class SelectedMetricInfo(BaseModel):
     name: str
     canonical_sql: str
     base_table: str
+    description: str = ""
+    filters_required: list[str] = Field(default_factory=list)
+    was_clarified_by_user: bool = False
+
+
+class RetrievalBundle(BaseModel):
+    selected_tables: list[SelectedTableInfo] = Field(default_factory=list)
+    selected_metrics: list[SelectedMetricInfo] = Field(default_factory=list)
+    few_shot_examples: list[RetrievedExampleInfo] = Field(default_factory=list)
+    resolved_metric_id: str | None = None
 
 
 class ContextInspectionReport(BaseModel):
