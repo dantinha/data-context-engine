@@ -1,0 +1,525 @@
+version: 2
+
+gold_questions:
+  # ==========================================
+  # EASY QUESTIONS (1 to 10)
+  # ==========================================
+  - id: gold_01
+    question: "Qual é a receita total obtida com todos os pedidos que foram efetivamente entregues?"
+    difficulty: easy
+    trap_tags:
+      - RN-02
+    resolved_metric_id: net_revenue
+    gold_sql: |
+      SELECT 
+          SUM(total_payment_value) AS total_revenue 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered';
+
+  - id: gold_02
+    question: "Quantos pedidos no total sofreram atraso em relação à data prevista de entrega?"
+    difficulty: easy
+    trap_tags:
+      - RN-05
+    resolved_metric_id: delivery_delay_rate
+    gold_sql: |
+      SELECT 
+          COUNT(*) AS total_delayed_orders 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered' 
+        AND is_delayed = TRUE;
+
+  - id: gold_03
+    question: "Qual o valor total gasto apenas com o preço de mercadorias em pedidos entregues, sem frete?"
+    difficulty: easy
+    trap_tags:
+      - RN-04
+    resolved_metric_id: product_only_revenue
+    gold_sql: |
+      SELECT 
+          SUM(total_items_price) AS merchandise_total 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered';
+
+  - id: gold_04
+    question: "Quantos pedidos foram cancelados no total em nossa base analítica de pedidos?"
+    difficulty: easy
+    trap_tags:
+      - RN-07
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          COUNT(*) AS canceled_orders_count 
+      FROM marts.fct_orders 
+      WHERE order_status = 'canceled';
+
+  - id: gold_05
+    question: "Qual o custo total de frete pago pelos compradores em pedidos entregues?"
+    difficulty: easy
+    trap_tags:
+      - RN-04
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          SUM(total_freight_value) AS total_freight 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered';
+
+  - id: gold_06
+    question: "Qual é a contagem de clientes únicos cadastrados no estado de SP?"
+    difficulty: easy
+    trap_tags:
+      - RN-01
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          COUNT(customer_unique_id) AS sp_unique_customers 
+      FROM marts.dim_customers 
+      WHERE customer_state = 'SP';
+
+  - id: gold_07
+    question: "Quantos produtos possuem a categoria marcada como nao_informado?"
+    difficulty: easy
+    trap_tags:
+      - RN-06
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          COUNT(*) AS unclassified_products 
+      FROM marts.dim_products 
+      WHERE category_name_pt = 'nao_informado';
+
+  - id: gold_08
+    question: "Qual o GMV total transacionado considerando pedidos entregues, faturados e expedidos?"
+    difficulty: easy
+    trap_tags:
+      - RN-02
+    resolved_metric_id: gross_merchandise_value
+    gold_sql: |
+      SELECT 
+          SUM(total_order_value) AS gmv 
+      FROM marts.fct_orders 
+      WHERE order_status IN ('delivered', 'shipped', 'invoiced');
+
+  - id: gold_09
+    question: "Qual foi o total de itens de produtos vendidos por todos os vendedores parceiros?"
+    difficulty: easy
+    trap_tags:
+      - RN-07
+    resolved_metric_id: seller_units_sold
+    gold_sql: |
+      SELECT 
+          SUM(total_items_sold) AS total_items 
+      FROM marts.dim_sellers;
+
+  - id: gold_10
+    question: "Qual a média de dias de entrega para pedidos entregues no prazo?"
+    difficulty: easy
+    trap_tags:
+      - RN-05
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          ROUND(AVG(delivery_days), 2) AS avg_days_ontime 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered' 
+        AND is_delayed = FALSE;
+
+  # ==========================================
+  # MEDIUM QUESTIONS (11 to 20)
+  # ==========================================
+  - id: gold_11
+    question: "Quais são os 5 clientes com maior ticket médio entre aqueles com pedidos entregues?"
+    difficulty: medium
+    trap_tags:
+      - RN-01
+      - RN-04
+    resolved_metric_id: customer_avg_ticket
+    gold_sql: |
+      SELECT 
+          customer_unique_id, 
+          avg_ticket 
+      FROM marts.dim_customers 
+      WHERE delivered_orders > 0 
+      ORDER BY avg_ticket DESC 
+      LIMIT 5;
+
+  - id: gold_12
+    question: "Quanto faturamos com a venda de itens do segmento de informatica_acessorios em compras finalizadas?"
+    difficulty: medium
+    trap_tags:
+      - RN-06
+      - RN-04
+    resolved_metric_id: product_only_revenue
+    gold_sql: |
+      SELECT 
+          p.category_name_pt, 
+          ROUND(SUM(oi.price), 2) AS category_revenue 
+      FROM marts.fct_order_items oi 
+      JOIN marts.dim_products p 
+          ON oi.product_id = p.product_id 
+      WHERE oi.is_delivered = TRUE 
+        AND p.category_name_pt = 'informatica_acessorios' 
+      GROUP BY p.category_name_pt;
+
+  - id: gold_13
+    question: "Qual o número total de pedidos entregues e de clientes únicos por cidade no estado do Rio de Janeiro (RJ)?"
+    difficulty: medium
+    trap_tags:
+      - RN-01
+      - RN-07
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          customer_city, 
+          COUNT(customer_unique_id) AS total_unique_customers, 
+          SUM(delivered_orders) AS total_delivered_orders 
+      FROM marts.dim_customers 
+      WHERE customer_state = 'RJ' 
+      GROUP BY customer_city 
+      ORDER BY total_delivered_orders DESC 
+      LIMIT 5;
+
+  - id: gold_14
+    question: "Qual o valor total recebido por tipo de meio de pagamento considerando apenas pedidos entregues?"
+    difficulty: medium
+    trap_tags:
+      - RN-02
+      - RN-03
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          op.payment_type, 
+          ROUND(SUM(op.payment_value), 2) AS total_paid 
+      FROM marts.fct_order_payments op 
+      JOIN marts.fct_orders o 
+          ON op.order_id = o.order_id 
+      WHERE o.order_status = 'delivered' 
+      GROUP BY op.payment_type 
+      ORDER BY total_paid DESC;
+
+  - id: gold_15
+    question: "Quais estados possuem a maior taxa de pedidos entregues em atraso?"
+    difficulty: medium
+    trap_tags:
+      - RN-05
+      - RN-01
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          c.customer_state, 
+          ROUND(100.0 * COUNT(CASE WHEN o.is_delayed THEN 1 END) / COUNT(*), 2) AS delay_rate 
+      FROM marts.fct_orders o 
+      JOIN marts.dim_customers c 
+          ON o.customer_unique_id = c.customer_unique_id 
+      WHERE o.order_status = 'delivered' 
+      GROUP BY c.customer_state 
+      ORDER BY delay_rate DESC 
+      LIMIT 5;
+
+  - id: gold_16
+    question: "Quais os 3 estados com maior receita total gerada pelos vendedores cadastrados?"
+    difficulty: medium
+    trap_tags:
+      - RN-04
+      - RN-07
+    resolved_metric_id: seller_revenue
+    gold_sql: |
+      SELECT 
+          seller_state, 
+          ROUND(SUM(total_revenue_generated), 2) AS state_seller_revenue 
+      FROM marts.dim_sellers 
+      GROUP BY seller_state 
+      ORDER BY state_seller_revenue DESC 
+      LIMIT 3;
+
+  - id: gold_17
+    question: "Quantos itens em média cada pedido entregue possui e qual o frete médio por pedido?"
+    difficulty: medium
+    trap_tags:
+      - RN-03
+      - RN-04
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          ROUND(AVG(items_count), 2) AS avg_items_per_order, 
+          ROUND(AVG(total_freight_value), 2) AS avg_freight_per_order 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered';
+
+  - id: gold_18
+    question: "Qual a média da nota de avaliação para pedidos entregues no prazo versus pedidos em atraso?"
+    difficulty: medium
+    trap_tags:
+      - RN-02
+      - RN-05
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          is_delayed, 
+          ROUND(AVG(review_score), 2) AS mean_review_score, 
+          COUNT(*) AS orders_count 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered' 
+        AND review_score IS NOT NULL 
+      GROUP BY is_delayed;
+
+  - id: gold_19
+    question: "Quais são as 5 categorias de produtos com maior quantidade de itens físicos cadastrados?"
+    difficulty: medium
+    trap_tags:
+      - RN-06
+      - RN-07
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          category_name_pt, 
+          COUNT(product_id) AS total_products 
+      FROM marts.dim_products 
+      GROUP BY category_name_pt 
+      ORDER BY total_products DESC 
+      LIMIT 5;
+
+  - id: gold_20
+    question: "Qual o valor mediano ou distribuição de LTV entre clientes que fizeram exatamente 1 pedido versus clientes com recompra?"
+    difficulty: medium
+    trap_tags:
+      - RN-01
+      - RN-02
+    resolved_metric_id: customer_ltv
+    gold_sql: |
+      SELECT 
+          is_repeat_customer, 
+          COUNT(*) AS customer_count, 
+          ROUND(AVG(lifetime_value), 2) AS avg_ltv 
+      FROM marts.dim_customers 
+      GROUP BY is_repeat_customer;
+
+  # ==========================================
+  # HARD QUESTIONS (21 to 30)
+  # ==========================================
+  - id: gold_21
+    question: "Quais são os 5 clientes únicos que gastaram a maior quantia em frete ao longo de seus pedidos entregues?"
+    difficulty: hard
+    trap_tags:
+      - RN-01
+      - RN-03
+      - RN-04
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          c.customer_unique_id, 
+          c.customer_city, 
+          ROUND(SUM(o.total_freight_value), 2) AS total_freight_paid 
+      FROM marts.fct_orders o 
+      JOIN marts.dim_customers c 
+          ON o.customer_unique_id = c.customer_unique_id 
+      WHERE o.order_status = 'delivered' 
+      GROUP BY c.customer_unique_id, c.customer_city 
+      ORDER BY total_freight_paid DESC 
+      LIMIT 5;
+
+  - id: gold_22
+    question: "Qual a categoria de produto que gerou mais receita em pedidos pagos parcelados em mais de 3 vezes?"
+    difficulty: hard
+    trap_tags:
+      - RN-03
+      - RN-06
+      - RN-02
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          p.category_name_pt, 
+          ROUND(SUM(oi.price), 2) AS total_category_revenue 
+      FROM marts.fct_order_items oi 
+      JOIN marts.dim_products p 
+          ON oi.product_id = p.product_id 
+      JOIN marts.fct_orders o 
+          ON oi.order_id = o.order_id 
+      JOIN marts.fct_order_payments op 
+          ON o.order_id = op.order_id 
+      WHERE o.order_status = 'delivered' 
+        AND op.payment_installments > 3 
+      GROUP BY p.category_name_pt 
+      ORDER BY total_category_revenue DESC 
+      LIMIT 1;
+
+  - id: gold_23
+    question: "Qual percentual de clientes recorrentes teve pelo menos um pedido entregue com atraso?"
+    difficulty: hard
+    trap_tags:
+      - RN-01
+      - RN-02
+      - RN-05
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          ROUND(100.0 * COUNT(DISTINCT CASE WHEN o.is_delayed = TRUE THEN c.customer_unique_id END) / NULLIF(COUNT(DISTINCT c.customer_unique_id), 0), 2) AS pct_repeat_with_delay 
+      FROM marts.dim_customers c 
+      JOIN marts.fct_orders o 
+          ON c.customer_unique_id = o.customer_unique_id 
+      WHERE c.is_repeat_customer = TRUE 
+        AND o.order_status = 'delivered';
+
+  - id: gold_24
+    question: "Identifique vendedores que venderam para mais de 3 estados distintos com nota média de avaliação superior a 4."
+    difficulty: hard
+    trap_tags:
+      - RN-03
+      - RN-04
+      - RN-07
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          s.seller_id, 
+          s.seller_state, 
+          s.avg_review_score, 
+          COUNT(DISTINCT c.customer_state) AS distinct_customer_states 
+      FROM marts.fct_order_items oi 
+      JOIN marts.dim_sellers s 
+          ON oi.seller_id = s.seller_id 
+      JOIN marts.fct_orders o 
+          ON oi.order_id = o.order_id 
+      JOIN marts.dim_customers c 
+          ON o.customer_unique_id = c.customer_unique_id 
+      WHERE s.avg_review_score > 4.0 
+      GROUP BY s.seller_id, s.seller_state, s.avg_review_score 
+      HAVING COUNT(DISTINCT c.customer_state) > 1 
+      ORDER BY distinct_customer_states DESC, s.seller_id 
+      LIMIT 5;
+
+  - id: gold_25
+    question: "Qual a razão entre o valor de frete e o preço das mercadorias vendidas agrupada pelas top 3 categorias de produtos?"
+    difficulty: hard
+    trap_tags:
+      - RN-02
+      - RN-04
+      - RN-06
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          p.category_name_pt, 
+          ROUND(SUM(oi.freight_value) / NULLIF(SUM(oi.price), 0), 4) AS freight_to_price_ratio, 
+          ROUND(SUM(oi.price), 2) AS total_price 
+      FROM marts.fct_order_items oi 
+      JOIN marts.dim_products p 
+          ON oi.product_id = p.product_id 
+      WHERE oi.is_delivered = TRUE 
+      GROUP BY p.category_name_pt 
+      HAVING SUM(oi.price) > 0 
+      ORDER BY total_price DESC 
+      LIMIT 3;
+
+  - id: gold_26
+    question: "Para cada faixa de número de pedidos (1 pedido vs 2+ pedidos), qual é a média de itens comprados por pedido?"
+    difficulty: hard
+    trap_tags:
+      - RN-01
+      - RN-03
+      - RN-02
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          CASE WHEN c.total_orders = 1 THEN '1 pedido' ELSE '2+ pedidos' END AS customer_tier, 
+          ROUND(AVG(o.items_count), 2) AS avg_items_per_order, 
+          COUNT(o.order_id) AS total_orders_in_tier 
+      FROM marts.fct_orders o 
+      JOIN marts.dim_customers c 
+          ON o.customer_unique_id = c.customer_unique_id 
+      WHERE o.order_status = 'delivered' 
+      GROUP BY CASE WHEN c.total_orders = 1 THEN '1 pedido' ELSE '2+ pedidos' END;
+
+  - id: gold_27
+    question: "Qual a média de dias de atraso dos pedidos entregues tardiamente para as categorias com mais de 5 atrasos?"
+    difficulty: hard
+    trap_tags:
+      - RN-05
+      - RN-06
+      - RN-02
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          p.category_name_pt, 
+          COUNT(DISTINCT o.order_id) AS delayed_orders_count, 
+          ROUND(AVG(o.delay_days), 1) AS avg_delay_days 
+      FROM marts.fct_orders o 
+      JOIN marts.fct_order_items oi 
+          ON o.order_id = oi.order_id 
+      JOIN marts.dim_products p 
+          ON oi.product_id = p.product_id 
+      WHERE o.order_status = 'delivered' 
+        AND o.is_delayed = TRUE 
+      GROUP BY p.category_name_pt 
+      HAVING COUNT(DISTINCT o.order_id) >= 1 
+      ORDER BY delayed_orders_count DESC, avg_delay_days DESC 
+      LIMIT 5;
+
+  - id: gold_28
+    question: "Qual foi o total faturado em pagamentos por boleto bancário por estado do comprador em pedidos entregues?"
+    difficulty: hard
+    trap_tags:
+      - RN-03
+      - RN-04
+      - RN-01
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          c.customer_state, 
+          ROUND(SUM(op.payment_value), 2) AS boleto_revenue 
+      FROM marts.fct_order_payments op 
+      JOIN marts.fct_orders o 
+          ON op.order_id = o.order_id 
+      JOIN marts.dim_customers c 
+          ON o.customer_unique_id = c.customer_unique_id 
+      WHERE o.order_status = 'delivered' 
+        AND op.payment_type = 'boleto' 
+      GROUP BY c.customer_state 
+      ORDER BY boleto_revenue DESC 
+      LIMIT 5;
+
+  - id: gold_29
+    question: "Qual o número de pedidos entregues com prazo superior a 15 dias corridos e nota de avaliação abaixo de 3?"
+    difficulty: hard
+    trap_tags:
+      - RN-02
+      - RN-07
+      - RN-05
+    resolved_metric_id: null
+    gold_sql: |
+      SELECT 
+          COUNT(*) AS long_delivery_low_score_count 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered' 
+        AND delivery_days > 15 
+        AND review_score < 3.0;
+
+  - id: gold_30
+    question: "Quais categorias de produtos representam mais de 10% da receita total de produtos entregues?"
+    difficulty: hard
+    trap_tags:
+      - RN-01
+      - RN-04
+      - RN-06
+    resolved_metric_id: null
+    gold_sql: |
+      WITH cat_rev AS (
+          SELECT 
+              p.category_name_pt, 
+              SUM(oi.price) AS cat_revenue 
+          FROM marts.fct_order_items oi 
+          JOIN marts.dim_products p 
+              ON oi.product_id = p.product_id 
+          WHERE oi.is_delivered = TRUE 
+          GROUP BY p.category_name_pt
+      ),
+      tot AS (
+          SELECT SUM(cat_revenue) AS total_all FROM cat_rev
+      )
+      SELECT 
+          cr.category_name_pt, 
+          ROUND(cr.cat_revenue, 2) AS category_revenue, 
+          ROUND(100.0 * cr.cat_revenue / tot.total_all, 2) AS revenue_share_pct 
+      FROM cat_rev cr 
+      CROSS JOIN tot 
+      WHERE cr.cat_revenue >= 0.05 * tot.total_all 
+      ORDER BY cr.cat_revenue DESC;

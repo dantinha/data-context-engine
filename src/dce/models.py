@@ -320,3 +320,31 @@ class MetadataCatalog(BaseModel):
                     return g
         return None
 
+
+
+class GoldQuestion(BaseModel):
+    id: str
+    question: str
+    difficulty: str
+    trap_tags: list[str] = Field(default_factory=list)
+    resolved_metric_id: str | None = None
+    gold_sql: str
+
+
+class LevelBenchmarkResult(BaseModel):
+    level: ContextLevel
+    single_shot_accuracy: float = 0.0
+    corrected_accuracy: float = 0.0
+    avg_tokens: float = 0.0
+    token_savings_pct: float = 0.0
+    total_questions: int = 30
+    correct_single_shot: int = 0
+    correct_with_correction: int = 0
+    failed_questions: list[str] = Field(default_factory=list)
+    details: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class BenchmarkSummary(BaseModel):
+    results: list[LevelBenchmarkResult] = Field(default_factory=list)
+    generated_at: str = ""
+    execution_mode: str = "replay"

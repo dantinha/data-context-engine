@@ -1,3 +1,4 @@
+from dce.execution.agent import SQLAgent
 from dce.execution.executor import SafeSQLExecutor
 from dce.execution.guardrails import (
     GuardrailResult,
@@ -7,6 +8,7 @@ from dce.execution.guardrails import (
 
 __all__ = [
     "GuardrailResult",
+    "SQLAgent",
     "SQLGuardrail",
     "SQLSecurityViolationError",
     "SafeSQLExecutor",
