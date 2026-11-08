@@ -173,6 +173,11 @@ class SQLExecutionResult(BaseModel):
     row_count: int = 0
     execution_time_ms: float = 0.0
     error_message: str | None = None
+    security_violation: bool = False
+    sql_executed: str | None = None
+    tables_referenced: list[str] = Field(default_factory=list)
+    limit_applied: int | None = None
+    governance_warnings: list[str] = Field(default_factory=list)
 
 
 class GeneratedSQLResponse(BaseModel):
