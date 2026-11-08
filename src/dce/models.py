@@ -91,22 +91,78 @@ class RetrievalBundle(BaseModel):
 
 
 class ContextInspectionReport(BaseModel):
+    level: ContextLevel = ContextLevel.L4
+    token_budget: int = 2500
+    raw_full_schema_tokens: int = 0
+    raw_schema_tokens: int = 0
+    assembled_context_tokens: int = 0
+    compressed_context_tokens: int = 0
+    token_savings_pct: float = 0.0
+    token_reduction_percentage: float = 0.0
+    prefix_cacheable_tokens: int = 0
+    prefix_cacheable_pct: float = 0.0
     selected_tables: list[SelectedTableInfo] = Field(default_factory=list)
     selected_metrics: list[SelectedMetricInfo] = Field(default_factory=list)
     few_shot_examples: list[RetrievedExampleInfo] = Field(default_factory=list)
-    raw_schema_tokens: int = 0
-    compressed_context_tokens: int = 0
-    token_reduction_percentage: float = 0.0
     latency_ms: float = 0.0
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            # raw_full_schema_tokens <-> raw_schema_tokens
+            if "raw_full_schema_tokens" in data and "raw_schema_tokens" not in data:
+                data["raw_schema_tokens"] = data["raw_full_schema_tokens"]
+            elif "raw_schema_tokens" in data and "raw_full_schema_tokens" not in data:
+                data["raw_full_schema_tokens"] = data["raw_schema_tokens"]
+
+            # assembled_context_tokens <-> compressed_context_tokens
+            if "assembled_context_tokens" in data and "compressed_context_tokens" not in data:
+                data["compressed_context_tokens"] = data["assembled_context_tokens"]
+            elif "compressed_context_tokens" in data and "assembled_context_tokens" not in data:
+                data["assembled_context_tokens"] = data["compressed_context_tokens"]
+
+            # token_savings_pct <-> token_reduction_percentage
+            if "token_savings_pct" in data and "token_reduction_percentage" not in data:
+                data["token_reduction_percentage"] = data["token_savings_pct"]
+            elif "token_reduction_percentage" in data and "token_savings_pct" not in data:
+                data["token_savings_pct"] = data["token_reduction_percentage"]
+        return data
 
 
 class AssembledContext(BaseModel):
     level: ContextLevel
-    system_prompt: str
+    system_prompt: str = ""
+    static_prefix: str = ""
+    dynamic_suffix: str = ""
+    full_prompt: str = ""
     schema_ddl: str = ""
     semantic_metrics: str = ""
     few_shot_block: str = ""
+    inspection: ContextInspectionReport = Field(default_factory=ContextInspectionReport)
     inspection_report: ContextInspectionReport = Field(default_factory=ContextInspectionReport)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            # inspection <-> inspection_report
+            if "inspection" in data and "inspection_report" not in data:
+                data["inspection_report"] = data["inspection"]
+            elif "inspection_report" in data and "inspection" not in data:
+                data["inspection"] = data["inspection_report"]
+
+            # static_prefix <-> system_prompt
+            if "static_prefix" in data and not data.get("system_prompt"):
+                data["system_prompt"] = data["static_prefix"]
+            elif "system_prompt" in data and not data.get("static_prefix"):
+                data["static_prefix"] = data["system_prompt"]
+
+            # full_prompt synthesis if missing
+            if not data.get("full_prompt") and (data.get("static_prefix") or data.get("dynamic_suffix")):
+                p = f"{data.get('static_prefix', '')}\n\n{data.get('dynamic_suffix', '')}".strip()
+                data["full_prompt"] = p
+        return data
 
 
 class SQLExecutionResult(BaseModel):
