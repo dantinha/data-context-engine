@@ -22,12 +22,12 @@ def _normalize_value(val: Any) -> Any:
     """Normalizes scalar value to canonical float, ISO date string, or stripped lowercase string."""
     if val is None:
         return None
+    if isinstance(val, bool):
+        return val
     if isinstance(val, (Decimal, int, float)):
         return float(val)
     if isinstance(val, (datetime.datetime, datetime.date)):
         return val.strftime("%Y-%m-%d")
-    if isinstance(val, bool):
-        return val
     if isinstance(val, str):
         cleaned = val.strip().lower()
         # ISO date prefix check
@@ -78,10 +78,10 @@ def _row_sort_key(row_tuple: tuple[Any, ...]) -> tuple:
     for item in row_tuple:
         if item is None:
             key_items.append((0, 0, ""))
-        elif isinstance(item, (int, float)):
-            key_items.append((1, round(item, 2), ""))
         elif isinstance(item, bool):
-            key_items.append((2, 1 if item else 0, ""))
+            key_items.append((1, 1 if item else 0, ""))
+        elif isinstance(item, (int, float)):
+            key_items.append((2, round(item, 2), ""))
         else:
             key_items.append((3, 0, str(item)))
     return tuple(key_items)

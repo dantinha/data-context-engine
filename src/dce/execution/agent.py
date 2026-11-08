@@ -292,12 +292,14 @@ class SQLAgent:
         selected_metric_id: str | None = None,
         replay_only: bool = True,
         max_retries: int = 2,
+        include_user_playbooks: bool = True,
     ) -> QueryTurnResult:
         """Executes a single conversational turn with Replay Cache and self-correction loop."""
         assembled_context = self.assembler.assemble(
             question=question,
             level=level,
             selected_metric_id=selected_metric_id,
+            include_user_playbooks=include_user_playbooks,
         )
 
         attempt = 0

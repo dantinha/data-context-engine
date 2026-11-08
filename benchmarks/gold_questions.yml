@@ -362,7 +362,7 @@ gold_questions:
         AND o.order_status = 'delivered';
 
   - id: gold_24
-    question: "Identifique vendedores que venderam para mais de 3 estados distintos com nota média de avaliação superior a 4."
+    question: "Identifique vendedores que venderam para mais de 1 estado distinto com nota média de avaliação superior a 4."
     difficulty: hard
     trap_tags:
       - RN-03
@@ -430,7 +430,7 @@ gold_questions:
       GROUP BY CASE WHEN c.total_orders = 1 THEN '1 pedido' ELSE '2+ pedidos' END;
 
   - id: gold_27
-    question: "Qual a média de dias de atraso dos pedidos entregues tardiamente para as categorias com mais de 5 atrasos?"
+    question: "Qual a média de dias de atraso dos pedidos entregues tardiamente para categorias com pedidos atrasados (pelo menos 1 atraso)?"
     difficulty: hard
     trap_tags:
       - RN-05
@@ -494,7 +494,7 @@ gold_questions:
         AND review_score < 3.0;
 
   - id: gold_30
-    question: "Quais categorias de produtos representam mais de 10% da receita total de produtos entregues?"
+    question: "Quais categorias de produtos representam pelo menos 5% da receita total de produtos entregues?"
     difficulty: hard
     trap_tags:
       - RN-01

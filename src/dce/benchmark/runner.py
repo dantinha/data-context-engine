@@ -160,6 +160,7 @@ class BenchmarkRunner:
                     selected_metric_id=q.resolved_metric_id,
                     replay_only=replay_only,
                     max_retries=0,
+                    include_user_playbooks=False,
                 )
 
                 single_match = False
@@ -183,6 +184,7 @@ class BenchmarkRunner:
                         selected_metric_id=q.resolved_metric_id,
                         replay_only=replay_only,
                         max_retries=2,
+                        include_user_playbooks=False,
                     )
                     final_match = False
                     if final_turn.execution_result.success:
