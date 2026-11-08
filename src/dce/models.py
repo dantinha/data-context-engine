@@ -202,12 +202,18 @@ class MetadataCatalog(BaseModel):
 
     def find_ambiguity_group(self, term: str) -> AmbiguityGroup | None:
         target = term.lower().strip()
+        if not target:
+            return None
         for g in self.ambiguity_groups:
             if g.id.lower() == target or g.name.lower() == target:
                 return g
             for trigger in g.trigger_terms:
                 trigger_clean = trigger.lower().strip()
-                if trigger_clean in target or target in trigger_clean:
+                if not trigger_clean:
+                    continue
+                if trigger_clean in target:
+                    return g
+                if len(target) >= 3 and target in trigger_clean:
                     return g
         return None
 

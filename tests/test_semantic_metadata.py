@@ -59,6 +59,9 @@ def test_metadata_catalog_helper_methods():
     assert group_faturamento.id == "faturamento_receita"
 
     assert catalog.find_ambiguity_group("termo_completamente_aleatorio") is None
+    assert catalog.find_ambiguity_group("") is None
+    assert catalog.find_ambiguity_group("   ") is None
+    assert catalog.find_ambiguity_group("a") is None
 
 
 def test_table_columns_and_schema():
