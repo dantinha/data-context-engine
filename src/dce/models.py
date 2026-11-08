@@ -212,6 +212,7 @@ class FewShotExample(BaseModel):
     resolved_metric_id: str | None = None
     tables_used: list[str] = Field(default_factory=list)
     explanation: str = ""
+    origin: str = "curated"
 
 
 class MetadataCatalog(BaseModel):

@@ -10,8 +10,8 @@ from dce.models import (
 
 
 def _normalize_text(text: str) -> str:
-    """Lowercases, strips accents, removes punctuation and excess whitespace."""
-    text = text.lower()
+    """Lowercases, strips accents, replaces underscores/punctuation, and removes excess whitespace."""
+    text = text.lower().replace("_", " ")
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("utf-8")
     text = re.sub(r"[^\w\s]", " ", text)
     return re.sub(r"\s+", " ", text).strip()

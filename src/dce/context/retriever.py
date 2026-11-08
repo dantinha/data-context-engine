@@ -6,6 +6,7 @@ from collections import deque
 from pathlib import Path
 
 from dce.models import (
+    FewShotExample,
     MetadataCatalog,
     RetrievalBundle,
     RetrievedExampleInfo,
@@ -49,8 +50,8 @@ CONCEPT_MAPPINGS: dict[str, list[str]] = {
 
 
 def _normalize_text(text: str) -> str:
-    """Lowercases, strips accents, removes punctuation and excess whitespace."""
-    text = text.lower()
+    """Lowercases, strips accents, replaces underscores/punctuation, and removes excess whitespace."""
+    text = text.lower().replace("_", " ")
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("utf-8")
     text = re.sub(r"[^\w\s]", " ", text)
     return re.sub(r"\s+", " ", text).strip()
@@ -112,34 +113,24 @@ class HybridRetriever:
         table: TableMetadata,
         question: str,
         q_tokens: set[str],
-        priority_table: str | None = None,
     ) -> float:
         score = 0.0
-
-        # 1. Base table priority boost
-        if priority_table and (
-            table.name == priority_table
-            or table.name.endswith(priority_table)
-            or priority_table.endswith(table.name)
-        ):
-            score += 100.0
-
         short_name = table.name.split(".")[-1]
 
-        # 2. Concept mapping boost
+        # 1. Concept mapping boost
         for concept in CONCEPT_MAPPINGS.get(short_name, []):
             if concept in q_tokens:
                 score += 3.5
 
-        # 3. Table name matching
+        # 2. Table name matching
         table_tokens = _tokenize(short_name)
         score += 3.0 * len(q_tokens & table_tokens)
 
-        # 4. Table description matching
+        # 3. Table description matching
         desc_tokens = _tokenize(table.description)
         score += 1.0 * len(q_tokens & desc_tokens)
 
-        # 5. Columns matching
+        # 4. Columns matching
         for col in table.columns:
             col_tokens = _tokenize(col.name)
             # Exact token match with column name
@@ -166,28 +157,44 @@ class HybridRetriever:
         q_tokens = _tokenize(question)
         mart_tables = [t for t in self.catalog.tables if t.schema_name == "marts"]
 
-        scored_tables: list[tuple[TableMetadata, float]] = []
+        scored_tables: list[tuple[TableMetadata, float, bool]] = []
         for table in mart_tables:
-            s = self._score_table(table, question, q_tokens, priority_table)
-            scored_tables.append((table, s))
+            is_priority = bool(
+                priority_table
+                and (
+                    table.name == priority_table
+                    or table.name.endswith(priority_table)
+                    or priority_table.endswith(table.name)
+                )
+            )
+            s = self._score_table(table, question, q_tokens)
+            scored_tables.append((table, s, is_priority))
 
-        # Sort descending by score
-        scored_tables.sort(key=lambda x: x[1], reverse=True)
+        # Sort: priority tables first, then by score descending
+        scored_tables.sort(key=lambda x: (1 if x[2] else 0, x[1]), reverse=True)
 
         selected_direct: list[SelectedTableInfo] = []
         if not scored_tables:
             return selected_direct
 
-        max_score = scored_tables[0][1]
+        max_lexical_score = max((x[1] for x in scored_tables), default=0.0)
+        threshold = max(3.5, 0.35 * max_lexical_score)
 
-        # Select direct match tables: score must be substantial
-        for table, score in scored_tables:
+        for table, score, is_priority in scored_tables:
             if len(selected_direct) >= top_k_tables:
                 break
-            if score <= 0.0:
-                continue
-            # Keep tables with significant score relative to top match
-            if score >= max(4.0, 0.4 * max_score):
+            if is_priority:
+                selected_direct.append(
+                    SelectedTableInfo(
+                        table_name=table.name,
+                        schema_name=table.schema_name,
+                        selection_type="direct_match",
+                        reason=f"Primary table for resolved metric (lexical score: {score:.1f})",
+                        relevance_score=score + 100.0,
+                        columns_included=[c.name for c in table.columns],
+                    )
+                )
+            elif score >= threshold and score > 0.0:
                 selected_direct.append(
                     SelectedTableInfo(
                         table_name=table.name,
@@ -199,9 +206,9 @@ class HybridRetriever:
                     )
                 )
 
-        # Fallback: if no table passed threshold but max_score > 0, pick top 1
-        if not selected_direct and max_score > 0:
-            top_t, top_s = scored_tables[0]
+        # Fallback: if no table passed threshold but max_lexical_score > 0, pick top 1
+        if not selected_direct and max_lexical_score > 0:
+            top_t, top_s, _ = scored_tables[0]
             selected_direct.append(
                 SelectedTableInfo(
                     table_name=top_t.name,
@@ -284,7 +291,7 @@ class HybridRetriever:
             terms = [m.name, m.id] + m.synonyms
             for term in terms:
                 norm_term = _normalize_text(term)
-                if norm_term and len(norm_term) >= 3 and norm_term in norm_q:
+                if norm_term and len(norm_term) >= 3 and re.search(rf"\b{re.escape(norm_term)}\b", norm_q):
                     selected_metrics.append(
                         SelectedMetricInfo(
                             metric_id=m.id,
@@ -322,23 +329,21 @@ class HybridRetriever:
                 try:
                     with open(playbook_path, "r", encoding="utf-8") as f:
                         pb_data = json.load(f)
-                        for pb in pb_data:
-                            # Duck-type candidate
-                            candidates.append(
-                                type(
-                                    "CandidateExample",
-                                    (),
-                                    {
-                                        "id": pb.get("id", ""),
-                                        "question": pb.get("question", ""),
-                                        "sql": pb.get("sanitized_sql", ""),
-                                        "resolved_metric_id": pb.get("resolved_metric_id"),
-                                        "tables_used": pb.get("used_tables", []),
-                                        "origin": "saved_playbook",
-                                    },
-                                )()
-                            )
-                except (json.JSONDecodeError, OSError, KeyError, TypeError) as exc:
+                        if isinstance(pb_data, list):
+                            for pb in pb_data:
+                                if isinstance(pb, dict):
+                                    candidates.append(
+                                        FewShotExample(
+                                            id=pb.get("id", ""),
+                                            question=pb.get("question", ""),
+                                            sql=pb.get("sanitized_sql", ""),
+                                            resolved_metric_id=pb.get("resolved_metric_id"),
+                                            tables_used=pb.get("used_tables", []),
+                                            explanation="Saved User Playbook",
+                                            origin="saved_playbook",
+                                        )
+                                    )
+                except (json.JSONDecodeError, OSError, KeyError, TypeError, AttributeError) as exc:
                     logger.debug("Failed to load saved playbooks: %s", exc)
 
         scored_examples: list[tuple[RetrievedExampleInfo, float]] = []
