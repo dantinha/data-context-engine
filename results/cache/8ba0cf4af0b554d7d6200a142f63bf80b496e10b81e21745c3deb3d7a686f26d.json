@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Qual a razão entre o valor de frete e o preço das mercadorias vendidas agrupada pelas top 3 categorias de produtos?",
+  "generated_sql": "SELECT \n    p.category_name_pt, \n    ROUND(SUM(oi.freight_value) / NULLIF(SUM(oi.price), 0), 4) AS freight_to_price_ratio, \n    ROUND(SUM(oi.price), 2) AS total_price \nFROM marts.fct_order_items oi \nJOIN marts.dim_products p \n    ON oi.product_id = p.product_id \nWHERE oi.is_delivered = TRUE \nGROUP BY p.category_name_pt \nHAVING SUM(oi.price) > 0 \nORDER BY total_price DESC \nLIMIT 3;",
+  "reasoning": "Deterministic resolution for L4 (correct semantic execution)",
+  "confidence": 1.0
+}

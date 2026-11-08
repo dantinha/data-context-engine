@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L1",
+  "attempt": 0,
+  "question": "Qual o número total de pedidos entregues e de clientes únicos por cidade no estado do Rio de Janeiro (RJ)?",
+  "generated_sql": "SELECT SUM(payment_value) FROM raw.olist_order_payments_dataset;",
+  "reasoning": "L1 failure: queries raw table ignoring delivered order status and fan-out",
+  "confidence": 1.0
+}

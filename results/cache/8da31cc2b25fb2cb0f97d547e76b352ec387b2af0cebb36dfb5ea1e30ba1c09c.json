@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Qual o valor mediano ou distribuição de LTV entre clientes que fizeram exatamente 1 pedido versus clientes com recompra?",
+  "generated_sql": "SELECT \n    is_repeat_customer, \n    COUNT(*) AS customer_count, \n    ROUND(AVG(lifetime_value), 2) AS avg_ltv \nFROM marts.dim_customers \nGROUP BY is_repeat_customer;",
+  "reasoning": "Deterministic resolution for L2 (correct semantic execution)",
+  "confidence": 1.0
+}

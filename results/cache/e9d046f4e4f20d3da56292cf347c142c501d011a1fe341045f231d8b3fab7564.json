@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Quais estados possuem a maior taxa de pedidos entregues em atraso?",
+  "generated_sql": "SELECT SUM(total_payment_value) FROM marts.fct_orders;",
+  "reasoning": "L2 failure: forgets RN-02 filter order_status = 'delivered'",
+  "confidence": 1.0
+}

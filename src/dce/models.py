@@ -25,6 +25,7 @@ class ClarificationRequest(BaseModel):
     ambiguity_group_id: str | None = None
     question: str
     message: str = ""
+    clarification_message: str = ""
     options: list[ClarificationOption] = Field(default_factory=list)
     resolved_metric_id: str | None = None
 
@@ -36,6 +37,10 @@ class ClarificationRequest(BaseModel):
                 data["needs_clarification"] = data["is_ambiguous"]
             elif "needs_clarification" in data and "is_ambiguous" not in data:
                 data["is_ambiguous"] = data["needs_clarification"]
+            if "message" in data and "clarification_message" not in data:
+                data["clarification_message"] = data["message"]
+            elif "clarification_message" in data and "message" not in data:
+                data["message"] = data["clarification_message"]
         return data
 
 
@@ -371,6 +376,17 @@ class MetadataCatalog(BaseModel):
     forbidden_joins: list[ForbiddenJoin] = Field(default_factory=list)
     few_shot_examples: list[FewShotExample] = Field(default_factory=list)
 
+    @property
+    def semantic_layer(self) -> Any:
+        class _SemanticLayerProxy:
+            def __init__(self, cat: "MetadataCatalog") -> None:
+                self.metrics = cat.metrics
+                self.business_rules = cat.business_rules
+                self.allowed_joins = cat.allowed_joins
+                self.forbidden_joins = cat.forbidden_joins
+                self.ambiguity_groups = cat.ambiguity_groups
+        return _SemanticLayerProxy(self)
+
     def get_table(self, table_name: str) -> TableMetadata | None:
         target = table_name.lower().strip()
         for t in self.tables:
@@ -434,3 +450,7 @@ class BenchmarkSummary(BaseModel):
     results: list[LevelBenchmarkResult] = Field(default_factory=list)
     generated_at: str = ""
     execution_mode: str = "replay"
+
+    @property
+    def level_metrics(self) -> list[LevelBenchmarkResult]:
+        return self.results

@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Quais são as 5 categorias de produtos com maior quantidade de itens físicos cadastrados?",
+  "generated_sql": "SELECT \n    category_name_pt, \n    COUNT(product_id) AS total_products \nFROM marts.dim_products \nGROUP BY category_name_pt \nORDER BY total_products DESC \nLIMIT 5;",
+  "reasoning": "Deterministic resolution for L2 (correct semantic execution)",
+  "confidence": 1.0
+}

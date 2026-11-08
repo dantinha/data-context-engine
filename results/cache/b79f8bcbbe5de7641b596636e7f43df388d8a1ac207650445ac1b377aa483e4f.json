@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L1",
+  "attempt": 0,
+  "question": "Quais os 3 estados com maior receita total gerada pelos vendedores cadastrados?",
+  "generated_sql": "SELECT SUM(payment_value) FROM raw.olist_order_payments_dataset;",
+  "reasoning": "L1 failure: queries raw table ignoring delivered order status and fan-out",
+  "confidence": 1.0
+}

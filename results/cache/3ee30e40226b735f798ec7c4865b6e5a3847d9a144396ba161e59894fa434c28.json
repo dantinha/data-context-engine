@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Quanto faturamos com a venda de itens do segmento de informatica_acessorios em compras finalizadas?",
+  "generated_sql": "SELECT SUM(total_payment_value) FROM marts.fct_orders;",
+  "reasoning": "L2 failure: forgets RN-02 filter order_status = 'delivered'",
+  "confidence": 1.0
+}

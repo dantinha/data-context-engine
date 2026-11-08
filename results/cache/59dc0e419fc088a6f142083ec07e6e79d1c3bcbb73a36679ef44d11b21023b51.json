@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L0",
+  "attempt": 1,
+  "question": "Qual a razão entre o valor de frete e o preço das mercadorias vendidas agrupada pelas top 3 categorias de produtos?",
+  "generated_sql": "SELECT SUM(valor_pedido) FROM pedidos WHERE status = 'entregue';",
+  "reasoning": "L0 failure: schema hallucination on non-existent table 'pedidos'",
+  "confidence": 1.0
+}

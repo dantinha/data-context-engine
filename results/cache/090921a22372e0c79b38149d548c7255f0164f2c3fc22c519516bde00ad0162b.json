@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L0",
+  "attempt": 1,
+  "question": "Qual a média da nota de avaliação para pedidos entregues no prazo versus pedidos em atraso?",
+  "generated_sql": "SELECT SUM(valor_pedido) FROM pedidos WHERE status = 'entregue';",
+  "reasoning": "L0 failure: schema hallucination on non-existent table 'pedidos'",
+  "confidence": 1.0
+}

@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L3",
+  "attempt": 0,
+  "question": "Quanto faturamos com a venda de itens do segmento de informatica_acessorios em compras finalizadas?",
+  "generated_sql": "SELECT p.categoria, ROUND(SUM(oi.price), 2) AS category_revenue FROM marts.fct_order_items oi JOIN marts.dim_products p ON oi.product_id = p.product_id WHERE oi.is_delivered = TRUE AND p.category_name_pt = 'informatica_acessorios' GROUP BY p.categoria;",
+  "reasoning": "L3 attempt 0: column 'categoria' not found in dim_products",
+  "confidence": 1.0
+}

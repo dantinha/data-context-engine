@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L1",
+  "attempt": 0,
+  "question": "Qual é a receita total obtida com todos os pedidos que foram efetivamente entregues?",
+  "generated_sql": "SELECT SUM(total_payment_value) FROM marts.fct_orders WHERE status = 'delivered';",
+  "reasoning": "L1 attempt 0: column name typo in filter",
+  "confidence": 1.0
+}

@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L0",
+  "attempt": 1,
+  "question": "Qual o valor mediano ou distribuição de LTV entre clientes que fizeram exatamente 1 pedido versus clientes com recompra?",
+  "generated_sql": "SELECT SUM(valor_pedido) FROM pedidos WHERE status = 'entregue';",
+  "reasoning": "L0 failure: schema hallucination on non-existent table 'pedidos'",
+  "confidence": 1.0
+}

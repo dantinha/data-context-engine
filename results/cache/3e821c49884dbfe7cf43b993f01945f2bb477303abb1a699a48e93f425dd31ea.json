@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Qual o valor total recebido por tipo de meio de pagamento considerando apenas pedidos entregues?",
+  "generated_sql": "SELECT \n    op.payment_type, \n    ROUND(SUM(op.payment_value), 2) AS total_paid \nFROM marts.fct_order_payments op \nJOIN marts.fct_orders o \n    ON op.order_id = o.order_id \nWHERE o.order_status = 'delivered' \nGROUP BY op.payment_type \nORDER BY total_paid DESC;",
+  "reasoning": "Deterministic resolution for L4 (correct semantic execution)",
+  "confidence": 1.0
+}

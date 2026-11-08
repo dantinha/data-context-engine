@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Qual é a contagem de clientes únicos cadastrados no estado de SP?",
+  "generated_sql": "SELECT \n    COUNT(customer_unique_id) AS sp_unique_customers \nFROM marts.dim_customers \nWHERE customer_state = 'SP';",
+  "reasoning": "Deterministic resolution for L2 (correct semantic execution)",
+  "confidence": 1.0
+}

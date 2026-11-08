@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L3",
+  "attempt": 1,
+  "question": "Quanto faturamos com a venda de itens do segmento de informatica_acessorios em compras finalizadas?",
+  "generated_sql": "SELECT \n    p.category_name_pt, \n    ROUND(SUM(oi.price), 2) AS category_revenue \nFROM marts.fct_order_items oi \nJOIN marts.dim_products p \n    ON oi.product_id = p.product_id \nWHERE oi.is_delivered = TRUE \n  AND p.category_name_pt = 'informatica_acessorios' \nGROUP BY p.category_name_pt;",
+  "reasoning": "Deterministic resolution for L3 (correct semantic execution)",
+  "confidence": 1.0
+}

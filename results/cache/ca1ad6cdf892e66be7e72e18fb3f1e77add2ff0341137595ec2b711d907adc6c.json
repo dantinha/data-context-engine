@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Qual o número de pedidos entregues com prazo superior a 15 dias corridos e nota de avaliação abaixo de 3?",
+  "generated_sql": "SELECT SUM(total_payment_value) FROM marts.fct_orders;",
+  "reasoning": "L2 failure: forgets RN-02 filter order_status = 'delivered'",
+  "confidence": 1.0
+}

@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L0",
+  "attempt": 0,
+  "question": "Qual a média de dias de entrega para pedidos entregues no prazo?",
+  "generated_sql": "SELECT \n    ROUND(AVG(delivery_days), 2) AS avg_days_ontime \nFROM marts.fct_orders \nWHERE order_status = 'delivered' \n  AND is_delayed = FALSE;",
+  "reasoning": "Deterministic resolution for L0 (correct semantic execution)",
+  "confidence": 1.0
+}

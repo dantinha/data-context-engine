@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L3",
+  "attempt": 0,
+  "question": "Qual foi o total faturado em pagamentos por boleto bancário por estado do comprador em pedidos entregues?",
+  "generated_sql": "SELECT category_name_pt, SUM(price) FROM marts.fct_order_items oi JOIN marts.dim_products p ON oi.product_id = p.product_id GROUP BY category_name_pt;",
+  "reasoning": "L3 failure: missing join filter is_delivered = TRUE on items",
+  "confidence": 1.0
+}

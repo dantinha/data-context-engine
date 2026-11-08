@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Qual foi o total de itens de produtos vendidos por todos os vendedores parceiros?",
+  "generated_sql": "SELECT \n    SUM(total_items_sold) AS total_items \nFROM marts.dim_sellers;",
+  "reasoning": "Deterministic resolution for L4 (correct semantic execution)",
+  "confidence": 1.0
+}

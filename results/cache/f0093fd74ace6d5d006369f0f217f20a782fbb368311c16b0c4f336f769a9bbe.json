@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Qual foi o total faturado em pagamentos por boleto bancário por estado do comprador em pedidos entregues?",
+  "generated_sql": "SELECT \n    c.customer_state, \n    ROUND(SUM(op.payment_value), 2) AS boleto_revenue \nFROM marts.fct_order_payments op \nJOIN marts.fct_orders o \n    ON op.order_id = o.order_id \nJOIN marts.dim_customers c \n    ON o.customer_unique_id = c.customer_unique_id \nWHERE o.order_status = 'delivered' \n  AND op.payment_type = 'boleto' \nGROUP BY c.customer_state \nORDER BY boleto_revenue DESC \nLIMIT 5;",
+  "reasoning": "Deterministic resolution for L4 (correct semantic execution)",
+  "confidence": 1.0
+}

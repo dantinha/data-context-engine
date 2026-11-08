@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Quantos itens em média cada pedido entregue possui e qual o frete médio por pedido?",
+  "generated_sql": "SELECT \n    ROUND(AVG(items_count), 2) AS avg_items_per_order, \n    ROUND(AVG(total_freight_value), 2) AS avg_freight_per_order \nFROM marts.fct_orders \nWHERE order_status = 'delivered';",
+  "reasoning": "Deterministic resolution for L2 (correct semantic execution)",
+  "confidence": 1.0
+}

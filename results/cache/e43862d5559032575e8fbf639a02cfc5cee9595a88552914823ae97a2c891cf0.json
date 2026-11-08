@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L0",
+  "attempt": 0,
+  "question": "Quanto faturamos com a venda de itens do segmento de informatica_acessorios em compras finalizadas?",
+  "generated_sql": "SELECT SUM(valor_pedido) FROM pedidos WHERE status = 'entregue';",
+  "reasoning": "L0 failure: schema hallucination on non-existent table 'pedidos'",
+  "confidence": 1.0
+}

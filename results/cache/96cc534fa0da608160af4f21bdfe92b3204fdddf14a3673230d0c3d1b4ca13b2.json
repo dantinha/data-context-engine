@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Quais os 3 estados com maior receita total gerada pelos vendedores cadastrados?",
+  "generated_sql": "SELECT \n    seller_state, \n    ROUND(SUM(total_revenue_generated), 2) AS state_seller_revenue \nFROM marts.dim_sellers \nGROUP BY seller_state \nORDER BY state_seller_revenue DESC \nLIMIT 3;",
+  "reasoning": "Deterministic resolution for L4 (correct semantic execution)",
+  "confidence": 1.0
+}

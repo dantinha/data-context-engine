@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Quantos pedidos no total sofreram atraso em relação à data prevista de entrega?",
+  "generated_sql": "SELECT \n    COUNT(*) AS total_delayed_orders \nFROM marts.fct_orders \nWHERE order_status = 'delivered' \n  AND is_delayed = TRUE;",
+  "reasoning": "Deterministic resolution for L2 (correct semantic execution)",
+  "confidence": 1.0
+}

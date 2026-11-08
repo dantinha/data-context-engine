@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 1,
+  "question": "Qual a categoria de produto que gerou mais receita em pedidos pagos parcelados em mais de 3 vezes?",
+  "generated_sql": "SELECT \n    p.category_name_pt, \n    ROUND(SUM(oi.price), 2) AS total_category_revenue \nFROM marts.fct_order_items oi \nJOIN marts.dim_products p \n    ON oi.product_id = p.product_id \nJOIN marts.fct_orders o \n    ON oi.order_id = o.order_id \nJOIN marts.fct_order_payments op \n    ON o.order_id = op.order_id \nWHERE o.order_status = 'delivered' \n  AND op.payment_installments > 3 \nGROUP BY p.category_name_pt \nORDER BY total_category_revenue DESC \nLIMIT 1;",
+  "reasoning": "Deterministic resolution for L4 (correct semantic execution)",
+  "confidence": 1.0
+}

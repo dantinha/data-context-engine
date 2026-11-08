@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L0",
+  "attempt": 0,
+  "question": "Qual percentual de clientes recorrentes teve pelo menos um pedido entregue com atraso?",
+  "generated_sql": "SELECT SUM(valor_pedido) FROM pedidos WHERE status = 'entregue';",
+  "reasoning": "L0 failure: schema hallucination on non-existent table 'pedidos'",
+  "confidence": 1.0
+}

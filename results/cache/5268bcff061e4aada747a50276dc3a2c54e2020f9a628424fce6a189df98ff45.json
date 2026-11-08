@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L3",
+  "attempt": 0,
+  "question": "Qual a categoria de produto que gerou mais receita em pedidos pagos parcelados em mais de 3 vezes?",
+  "generated_sql": "SELECT category_name_pt, SUM(price) FROM marts.fct_order_items oi JOIN marts.dim_products p ON oi.product_id = p.product_id GROUP BY category_name_pt;",
+  "reasoning": "L3 failure: missing join filter is_delivered = TRUE on items",
+  "confidence": 1.0
+}

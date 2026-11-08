@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Qual o valor total gasto apenas com o preço de mercadorias em pedidos entregues, sem frete?",
+  "generated_sql": "SELECT \n    SUM(total_items_price) AS merchandise_total \nFROM marts.fct_orders \nWHERE order_status = 'delivered';",
+  "reasoning": "Deterministic resolution for L2 (correct semantic execution)",
+  "confidence": 1.0
+}

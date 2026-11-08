@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Qual a média da nota de avaliação para pedidos entregues no prazo versus pedidos em atraso?",
+  "generated_sql": "SELECT \n    is_delayed, \n    ROUND(AVG(review_score), 2) AS mean_review_score, \n    COUNT(*) AS orders_count \nFROM marts.fct_orders \nWHERE order_status = 'delivered' \n  AND review_score IS NOT NULL \nGROUP BY is_delayed;",
+  "reasoning": "Deterministic resolution for L2 (correct semantic execution)",
+  "confidence": 1.0
+}

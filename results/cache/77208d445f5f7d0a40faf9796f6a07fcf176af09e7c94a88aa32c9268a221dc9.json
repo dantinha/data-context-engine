@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L0",
+  "attempt": 0,
+  "question": "Quantos pedidos foram cancelados no total em nossa base analítica de pedidos?",
+  "generated_sql": "SELECT COUNT(*) FROM marts.fct_orders WHERE status = 'canceled';",
+  "reasoning": "L0 attempt 0: hallucinates column 'status' instead of 'order_status'",
+  "confidence": 1.0
+}

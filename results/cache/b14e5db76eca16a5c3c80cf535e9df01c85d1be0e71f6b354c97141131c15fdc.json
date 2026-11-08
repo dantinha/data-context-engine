@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Quais categorias de produtos representam pelo menos 5% da receita total de produtos entregues?",
+  "generated_sql": "SELECT s.seller_id, COUNT(*) FROM marts.dim_sellers s GROUP BY s.seller_id LIMIT 5;",
+  "reasoning": "L4 failure: incomplete join structure for multi-condition seller aggregation",
+  "confidence": 1.0
+}

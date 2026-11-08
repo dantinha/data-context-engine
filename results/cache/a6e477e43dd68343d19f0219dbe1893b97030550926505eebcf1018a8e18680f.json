@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Para cada faixa de número de pedidos (1 pedido vs 2+ pedidos), qual é a média de itens comprados por pedido?",
+  "generated_sql": "SELECT \n    CASE WHEN c.total_orders = 1 THEN '1 pedido' ELSE '2+ pedidos' END AS customer_tier, \n    ROUND(AVG(o.items_count), 2) AS avg_items_per_order, \n    COUNT(o.order_id) AS total_orders_in_tier \nFROM marts.fct_orders o \nJOIN marts.dim_customers c \n    ON o.customer_unique_id = c.customer_unique_id \nWHERE o.order_status = 'delivered' \nGROUP BY CASE WHEN c.total_orders = 1 THEN '1 pedido' ELSE '2+ pedidos' END;",
+  "reasoning": "Deterministic resolution for L4 (correct semantic execution)",
+  "confidence": 1.0
+}

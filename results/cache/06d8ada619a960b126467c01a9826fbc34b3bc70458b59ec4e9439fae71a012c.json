@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Qual o número total de pedidos entregues e de clientes únicos por cidade no estado do Rio de Janeiro (RJ)?",
+  "generated_sql": "SELECT \n    customer_city, \n    COUNT(customer_unique_id) AS total_unique_customers, \n    SUM(delivered_orders) AS total_delivered_orders \nFROM marts.dim_customers \nWHERE customer_state = 'RJ' \nGROUP BY customer_city \nORDER BY total_delivered_orders DESC \nLIMIT 5;",
+  "reasoning": "Deterministic resolution for L2 (correct semantic execution)",
+  "confidence": 1.0
+}

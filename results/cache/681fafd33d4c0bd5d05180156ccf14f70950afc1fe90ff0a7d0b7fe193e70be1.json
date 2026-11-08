@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L3",
+  "attempt": 0,
+  "question": "Qual percentual de clientes recorrentes teve pelo menos um pedido entregue com atraso?",
+  "generated_sql": "SELECT \n    ROUND(100.0 * COUNT(DISTINCT CASE WHEN o.is_delayed = TRUE THEN c.customer_unique_id END) / NULLIF(COUNT(DISTINCT c.customer_unique_id), 0), 2) AS pct_repeat_with_delay \nFROM marts.dim_customers c \nJOIN marts.fct_orders o \n    ON c.customer_unique_id = o.customer_unique_id \nWHERE c.is_repeat_customer = TRUE \n  AND o.order_status = 'delivered';",
+  "reasoning": "Deterministic resolution for L3 (correct semantic execution)",
+  "confidence": 1.0
+}

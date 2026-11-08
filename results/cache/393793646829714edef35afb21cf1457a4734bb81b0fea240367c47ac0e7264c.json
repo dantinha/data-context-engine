@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L3",
+  "attempt": 0,
+  "question": "Quais são os 5 clientes únicos que gastaram a maior quantia em frete ao longo de seus pedidos entregues?",
+  "generated_sql": "SELECT \n    c.customer_unique_id, \n    c.customer_city, \n    ROUND(SUM(o.total_freight_value), 2) AS total_freight_paid \nFROM marts.fct_orders o \nJOIN marts.dim_customers c \n    ON o.customer_unique_id = c.customer_unique_id \nWHERE o.order_status = 'delivered' \nGROUP BY c.customer_unique_id, c.customer_city \nORDER BY total_freight_paid DESC \nLIMIT 5;",
+  "reasoning": "Deterministic resolution for L3 (correct semantic execution)",
+  "confidence": 1.0
+}

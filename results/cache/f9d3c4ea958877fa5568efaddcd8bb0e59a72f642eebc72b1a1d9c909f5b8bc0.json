@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Qual a média de dias de atraso dos pedidos entregues tardiamente para categorias com pedidos atrasados (pelo menos 1 atraso)?",
+  "generated_sql": "SELECT \n    p.category_name_pt, \n    COUNT(DISTINCT o.order_id) AS delayed_orders_count, \n    ROUND(AVG(o.delay_days), 1) AS avg_delay_days \nFROM marts.fct_orders o \nJOIN marts.fct_order_items oi \n    ON o.order_id = oi.order_id \nJOIN marts.dim_products p \n    ON oi.product_id = p.product_id \nWHERE o.order_status = 'delivered' \n  AND o.is_delayed = TRUE \nGROUP BY p.category_name_pt \nHAVING COUNT(DISTINCT o.order_id) >= 1 \nORDER BY delayed_orders_count DESC, avg_delay_days DESC \nLIMIT 5;",
+  "reasoning": "Deterministic resolution for L4 (correct semantic execution)",
+  "confidence": 1.0
+}

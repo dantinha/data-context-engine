@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L3",
+  "attempt": 0,
+  "question": "Quantos produtos possuem a categoria marcada como nao_informado?",
+  "generated_sql": "SELECT \n    COUNT(*) AS unclassified_products \nFROM marts.dim_products \nWHERE category_name_pt = 'nao_informado';",
+  "reasoning": "Deterministic resolution for L3 (correct semantic execution)",
+  "confidence": 1.0
+}

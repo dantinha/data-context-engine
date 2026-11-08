@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Quais são os 5 clientes com maior ticket médio entre aqueles com pedidos entregues?",
+  "generated_sql": "SELECT \n    customer_unique_id, \n    avg_ticket \nFROM marts.dim_customers \nWHERE delivered_orders > 0 \nORDER BY avg_ticket DESC \nLIMIT 5;",
+  "reasoning": "Deterministic resolution for L4 (correct semantic execution)",
+  "confidence": 1.0
+}

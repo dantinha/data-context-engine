@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L1",
+  "attempt": 0,
+  "question": "Para cada faixa de número de pedidos (1 pedido vs 2+ pedidos), qual é a média de itens comprados por pedido?",
+  "generated_sql": "SELECT SUM(payment_value) FROM raw.olist_order_payments_dataset;",
+  "reasoning": "L1 failure: queries raw table ignoring delivered order status and fan-out",
+  "confidence": 1.0
+}

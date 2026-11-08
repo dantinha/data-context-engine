@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L3",
+  "attempt": 0,
+  "question": "Identifique vendedores que venderam para mais de 1 estado distinto com nota média de avaliação superior a 4.",
+  "generated_sql": "SELECT category_name_pt, SUM(price) FROM marts.fct_order_items oi JOIN marts.dim_products p ON oi.product_id = p.product_id GROUP BY category_name_pt;",
+  "reasoning": "L3 failure: missing join filter is_delivered = TRUE on items",
+  "confidence": 1.0
+}

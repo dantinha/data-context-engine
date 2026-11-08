@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Qual a categoria de produto que gerou mais receita em pedidos pagos parcelados em mais de 3 vezes?",
+  "generated_sql": "SELECT p.category_name_pt ROUND(SUM(oi.price), 2) AS total_category_revenue FROM marts.fct_order_items oi JOIN marts.dim_products p ON oi.product_id = p.product_id JOIN marts.fct_orders o ON oi.order_id = o.order_id JOIN marts.fct_order_payments op ON o.order_id = op.order_id WHERE o.order_status = 'delivered' AND op.payment_installments > 3 GROUP BY p.category_name_pt ORDER BY total_category_revenue DESC LIMIT 1;",
+  "reasoning": "L4 attempt 0: syntax error missing comma",
+  "confidence": 1.0
+}

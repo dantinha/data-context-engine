@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L1",
+  "attempt": 0,
+  "question": "Qual o número de pedidos entregues com prazo superior a 15 dias corridos e nota de avaliação abaixo de 3?",
+  "generated_sql": "SELECT SUM(payment_value) FROM raw.olist_order_payments_dataset;",
+  "reasoning": "L1 failure: queries raw table ignoring delivered order status and fan-out",
+  "confidence": 1.0
+}

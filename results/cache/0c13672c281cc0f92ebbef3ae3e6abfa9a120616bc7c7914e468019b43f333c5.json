@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L3",
+  "attempt": 0,
+  "question": "Quais estados possuem a maior taxa de pedidos entregues em atraso?",
+  "generated_sql": "SELECT \n    c.customer_state, \n    ROUND(100.0 * COUNT(CASE WHEN o.is_delayed THEN 1 END) / COUNT(*), 2) AS delay_rate \nFROM marts.fct_orders o \nJOIN marts.dim_customers c \n    ON o.customer_unique_id = c.customer_unique_id \nWHERE o.order_status = 'delivered' \nGROUP BY c.customer_state \nORDER BY delay_rate DESC \nLIMIT 5;",
+  "reasoning": "Deterministic resolution for L3 (correct semantic execution)",
+  "confidence": 1.0
+}

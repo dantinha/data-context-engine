@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L2",
+  "attempt": 0,
+  "question": "Quais são os 5 clientes com maior ticket médio entre aqueles com pedidos entregues?",
+  "generated_sql": "SELECT customer_unique_id, ticket_medio FROM marts.dim_customers WHERE delivered_orders > 0 ORDER BY avg_ticket DESC LIMIT 5;",
+  "reasoning": "L2 attempt 0: column 'ticket_medio' not found in marts.dim_customers",
+  "confidence": 1.0
+}
