@@ -83,3 +83,25 @@ async def test_mcp_server_instance_registration(tmp_path: Path):
     ]
     for expected in expected_tools:
         assert expected in tool_names
+
+
+def test_describe_mart_table_security_hardening(tmp_path: Path):
+    """Testa que Tool 4 rejeita identificadores maliciosos e tabelas inexistentes no catálogo."""
+    db_path = build_warehouse(tmp_path / "wh.duckdb", sample_orders_count=50, seed=42)
+    tools = create_dce_mcp_tools(db_path=db_path, playbooks_path=tmp_path / "playbooks.json")
+
+    # 1. Tentativa de SQL injection no nome de tabela
+    res_inject = tools.describe_mart_table("fct_orders WHERE 1=0 UNION ALL SELECT 1")
+    assert "error" in res_inject
+    assert "Invalid mart table identifier" in res_inject["error"]
+
+    # 2. Tabela inexistente no catálogo
+    res_missing = tools.describe_mart_table("non_existent_table")
+    assert "error" in res_missing
+    assert "not found in marts catalog" in res_missing["error"]
+
+    # 3. Nome legítimo com prefixo marts.
+    res_valid = tools.describe_mart_table("marts.dim_customers", sample_rows=2)
+    assert res_valid["table_name"] == "marts.dim_customers"
+    assert len(res_valid["sample_data"]) == 2
+

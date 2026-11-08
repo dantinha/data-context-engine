@@ -1,6 +1,7 @@
 """FastMCP Server providing 7 tools for LLM agents to interact with the Data Context Engine."""
 
 import argparse
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -120,16 +121,26 @@ class DCEToolsContainer:
         if clean_name.startswith("marts."):
             clean_name = clean_name.replace("marts.", "", 1)
 
+        # Defense-in-depth: reject invalid identifiers (prevent SQL injection)
+        if not re.match(r"^[a-zA-Z0-9_]+$", clean_name):
+            return {
+                "error": f"Invalid mart table identifier: '{table_name}'. Only alphanumeric and underscore names allowed."
+            }
+
         table = self.catalog.get_table(f"marts.{clean_name}") or self.catalog.get_table(clean_name)
+        if table is None:
+            return {"error": f"Table '{table_name}' not found in marts catalog."}
+
         safe_limit = max(1, min(sample_rows, 50))
-        exec_res = self.executor.execute(f"SELECT * FROM marts.{clean_name} LIMIT {safe_limit}")
+        canon_name = table.name.split(".")[-1]
+        exec_res = self.executor.execute(f"SELECT * FROM marts.{canon_name} LIMIT {safe_limit}")
 
         return {
-            "table_name": table.name if table else clean_name,
-            "schema_name": table.schema_name if table else "marts",
-            "description": table.description if table else "",
-            "primary_key": table.primary_key if table else None,
-            "columns": [col.model_dump() for col in table.columns] if table else [],
+            "table_name": table.name,
+            "schema_name": table.schema_name or "marts",
+            "description": table.description or "",
+            "primary_key": table.primary_key,
+            "columns": [col.model_dump() for col in table.columns],
             "sample_data": exec_res.rows,
             "columns_returned": exec_res.columns,
         }
