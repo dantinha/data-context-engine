@@ -1,0 +1,448 @@
+version: 2
+
+tables:
+  - name: marts.fct_orders
+    schema_name: marts
+    description: "Tabela fato agregada no grão de 1 linha por pedido (order_id). Consolida métricas de itens, pagamentos e avaliações para evitar armadilhas de fan-out (RN-03)."
+    columns:
+      - name: order_id
+        type: VARCHAR
+        description: "Chave primária exclusiva do pedido."
+        is_primary_key: true
+        is_foreign_key: false
+
+      - name: customer_id
+        type: VARCHAR
+        description: "Identificador operacional do cliente específico para esta transação de pedido."
+        is_primary_key: false
+        is_foreign_key: true
+        references: "staging.stg_customers.customer_id"
+
+      - name: customer_unique_id
+        type: VARCHAR
+        description: "Identificador único real do cliente que persiste entre pedidos (RN-01). Chave estrangeira para marts.dim_customers."
+        is_primary_key: false
+        is_foreign_key: true
+        references: "marts.dim_customers.customer_unique_id"
+
+      - name: order_status
+        type: VARCHAR
+        description: "Status atual do pedido no fluxo de compra e entrega."
+        is_primary_key: false
+        is_foreign_key: false
+        allowed_values:
+          - delivered
+          - canceled
+          - unavailable
+          - shipped
+          - invoiced
+          - processing
+          - created
+          - approved
+
+      - name: order_purchase_timestamp
+        type: TIMESTAMP
+        description: "Data e hora exata em que a compra foi realizada pelo cliente."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: order_purchase_date
+        type: DATE
+        description: "Data da compra (sem componente de horário) para agregações temporais diárias/mensais."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: order_approved_at
+        type: TIMESTAMP
+        description: "Data e hora em que a aprovação do pagamento foi confirmada pelo gateway."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: order_delivered_customer_date
+        type: TIMESTAMP
+        description: "Data e hora efetiva em que o pedido foi entregue ao cliente (NULL se não entregue)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: order_estimated_delivery_date
+        type: TIMESTAMP
+        description: "Data limite estimada informada ao cliente na finalização da compra."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: items_count
+        type: INTEGER
+        description: "Quantidade total de itens contidos neste pedido."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: total_items_price
+        type: DECIMAL(10, 2)
+        description: "Soma do valor unitário de todos os itens do pedido, excluindo frete (RN-04)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: total_freight_value
+        type: DECIMAL(10, 2)
+        description: "Soma total do frete cobrado por todos os itens do pedido."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: total_order_value
+        type: DECIMAL(10, 2)
+        description: "Valor total da ordem de compra: total_items_price + total_freight_value."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: total_payment_value
+        type: DECIMAL(10, 2)
+        description: "Valor total efetivamente cobrado e registrado nas transações de pagamento do pedido."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: payment_installments_max
+        type: INTEGER
+        description: "Número máximo de parcelas entre as formas de pagamento utilizadas no pedido."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: primary_payment_type
+        type: VARCHAR
+        description: "Método de pagamento que concentrou o maior valor na transação."
+        is_primary_key: false
+        is_foreign_key: false
+        allowed_values:
+          - credit_card
+          - boleto
+          - voucher
+          - debit_card
+
+      - name: review_score
+        type: DOUBLE
+        description: "Nota média das avaliações recebidas para este pedido (1.0 a 5.0, ou NULL se sem review)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: is_delivered
+        type: BOOLEAN
+        description: "Flag booleana indicando se o pedido foi entregue com sucesso (order_status = 'delivered')."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: is_canceled
+        type: BOOLEAN
+        description: "Flag booleana indicando se o pedido foi cancelado (order_status = 'canceled')."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: is_delayed
+        type: BOOLEAN
+        description: "Flag canônica de atraso (RN-05): TRUE se delivered e data de entrega > estimada; FALSE caso contrário."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: delivery_days
+        type: INTEGER
+        description: "Tempo total em dias corridos da compra até a entrega (NULL se pedido não entregue)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: delay_days
+        type: INTEGER
+        description: "Dias de atraso além da data estimada. 0 se entregue no prazo ou antes, NULL se não entregue (RN-05)."
+        is_primary_key: false
+        is_foreign_key: false
+
+  - name: marts.fct_order_items
+    schema_name: marts
+    description: "Tabela fato no grão de linha de item de pedido (order_id + order_item_id). Detalha produtos, vendedores e valores individuais."
+    columns:
+      - name: order_id
+        type: VARCHAR
+        description: "Chave do pedido (parte da PK composta). Chave estrangeira para marts.fct_orders."
+        is_primary_key: true
+        is_foreign_key: true
+        references: "marts.fct_orders.order_id"
+
+      - name: order_item_id
+        type: INTEGER
+        description: "Número sequencial identificador do item dentro do pedido (parte da PK composta)."
+        is_primary_key: true
+        is_foreign_key: false
+
+      - name: product_id
+        type: VARCHAR
+        description: "Identificador do produto vendido. Chave estrangeira para marts.dim_products."
+        is_primary_key: false
+        is_foreign_key: true
+        references: "marts.dim_products.product_id"
+
+      - name: seller_id
+        type: VARCHAR
+        description: "Identificador do vendedor parceiro. Chave estrangeira para marts.dim_sellers."
+        is_primary_key: false
+        is_foreign_key: true
+        references: "marts.dim_sellers.seller_id"
+
+      - name: customer_unique_id
+        type: VARCHAR
+        description: "Identificador do cliente da compra (RN-01), permitindo join seguro de 1 salto para marts.dim_customers."
+        is_primary_key: false
+        is_foreign_key: true
+        references: "marts.dim_customers.customer_unique_id"
+
+      - name: order_status
+        type: VARCHAR
+        description: "Status do pedido herdado da ordem de compra."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: is_delivered
+        type: BOOLEAN
+        description: "Flag indicando se o pedido ao qual o item pertence foi entregue com sucesso."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: order_purchase_timestamp
+        type: TIMESTAMP
+        description: "Data e hora da compra herdada do pedido."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: order_purchase_date
+        type: DATE
+        description: "Data da compra para agregações por item e produto."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: price
+        type: DECIMAL(10, 2)
+        description: "Preço unitário do produto deste item sem o frete (RN-04)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: freight_value
+        type: DECIMAL(10, 2)
+        description: "Valor do frete alocado especificamente para esta unidade/item."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: total_item_value
+        type: DECIMAL(10, 2)
+        description: "Valor total do item calculado como price + freight_value."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: review_score
+        type: DOUBLE
+        description: "Nota de avaliação média do pedido associada a este item."
+        is_primary_key: false
+        is_foreign_key: false
+
+  - name: marts.fct_order_payments
+    schema_name: marts
+    description: "Tabela fato no grão de parcela/meio de pagamento por pedido (order_id + payment_sequential). ATENÇÃO: Nunca junte diretamente com fct_order_items (RN-03)."
+    columns:
+      - name: order_id
+        type: VARCHAR
+        description: "Chave do pedido (parte da PK composta). Chave estrangeira para marts.fct_orders."
+        is_primary_key: true
+        is_foreign_key: true
+        references: "marts.fct_orders.order_id"
+
+      - name: payment_sequential
+        type: INTEGER
+        description: "Número sequencial da forma de pagamento utilizada no pedido (parte da PK composta)."
+        is_primary_key: true
+        is_foreign_key: false
+
+      - name: order_status
+        type: VARCHAR
+        description: "Status do pedido associado ao pagamento."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: order_purchase_date
+        type: DATE
+        description: "Data em que a compra associada a este pagamento ocorreu."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: payment_type
+        type: VARCHAR
+        description: "Modalidade de pagamento utilizada nesta transação."
+        is_primary_key: false
+        is_foreign_key: false
+        allowed_values:
+          - credit_card
+          - boleto
+          - voucher
+          - debit_card
+
+      - name: payment_installments
+        type: INTEGER
+        description: "Quantidade de parcelas contratadas nesta forma de pagamento."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: payment_value
+        type: DECIMAL(10, 2)
+        description: "Valor monetário total quitado nesta modalidade/transação (RN-04)."
+        is_primary_key: false
+        is_foreign_key: false
+
+  - name: marts.dim_customers
+    schema_name: marts
+    description: "Tabela dimensão de clientes consolidados no grão de 1 linha por customer_unique_id (RN-01). Contém histórico de compras, métricas de LTV e localização atual."
+    columns:
+      - name: customer_unique_id
+        type: VARCHAR
+        description: "Chave primária canônica identificadora do cliente pessoa física (RN-01)."
+        is_primary_key: true
+        is_foreign_key: false
+
+      - name: customer_city
+        type: VARCHAR
+        description: "Cidade de residência mais recente do cliente baseada no último pedido realizado."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: customer_state
+        type: VARCHAR
+        description: "Sigla da Unidade Federativa (UF) de residência mais recente do cliente."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: first_order_date
+        type: DATE
+        description: "Data do primeiro pedido registrado para este cliente (safra de aquisição)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: last_order_date
+        type: DATE
+        description: "Data da compra mais recente registrada para este cliente."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: total_orders
+        type: INTEGER
+        description: "Número total de pedidos efetuados pelo cliente (incluindo cancelados)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: delivered_orders
+        type: INTEGER
+        description: "Número de pedidos entregues com sucesso para este cliente."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: lifetime_value
+        type: DECIMAL(12, 2)
+        description: "LTV acumulado: soma de total_payment_value em pedidos com status 'delivered' (RN-01, RN-02)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: avg_ticket
+        type: DECIMAL(12, 2)
+        description: "Ticket médio gasto pelo cliente por pedido entregue (lifetime_value / delivered_orders)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: is_repeat_customer
+        type: BOOLEAN
+        description: "Flag booleana indicando se o cliente possui mais de 1 pedido entregue (recompra/fidelidade)."
+        is_primary_key: false
+        is_foreign_key: false
+
+  - name: marts.dim_products
+    schema_name: marts
+    description: "Tabela dimensão de produtos no grão de 1 linha por product_id. Trata categorias bilíngues com fallbacks garantidos sem valores nulos (RN-06)."
+    columns:
+      - name: product_id
+        type: VARCHAR
+        description: "Chave primária exclusiva do produto cadastrado no catálogo."
+        is_primary_key: true
+        is_foreign_key: false
+
+      - name: category_name_pt
+        type: VARCHAR
+        description: "Nome padronizado da categoria em português (fallback 'nao_informado', sem nulos conforme RN-06)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: category_name_en
+        type: VARCHAR
+        description: "Tradução oficial da categoria em inglês (fallback 'not_informed', sem nulos conforme RN-06)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: product_weight_g
+        type: DOUBLE
+        description: "Peso bruto do produto em gramas."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: product_length_cm
+        type: DOUBLE
+        description: "Comprimento linear do produto em centímetros."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: product_height_cm
+        type: DOUBLE
+        description: "Altura do produto em centímetros."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: product_width_cm
+        type: DOUBLE
+        description: "Largura do produto em centímetros."
+        is_primary_key: false
+        is_foreign_key: false
+
+  - name: marts.dim_sellers
+    schema_name: marts
+    description: "Tabela dimensão de parceiros vendedores no grão de 1 linha por seller_id. Consolida volume de vendas, faturamento realizado e reputação média."
+    columns:
+      - name: seller_id
+        type: VARCHAR
+        description: "Chave primária exclusiva do vendedor/seller parceiro."
+        is_primary_key: true
+        is_foreign_key: false
+
+      - name: seller_city
+        type: VARCHAR
+        description: "Cidade base de operação do vendedor."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: seller_state
+        type: VARCHAR
+        description: "Sigla do estado (UF) base de operação do vendedor."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: total_orders_sold
+        type: INTEGER
+        description: "Contagem de pedidos entregues distintos contendo itens vendidos por este vendedor."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: total_items_sold
+        type: INTEGER
+        description: "Quantidade total de unidades/itens comercializados em pedidos entregues."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: total_revenue_generated
+        type: DECIMAL(12, 2)
+        description: "Receita bruta gerada pelas mercadorias vendidas (soma de price em pedidos entregues)."
+        is_primary_key: false
+        is_foreign_key: false
+
+      - name: avg_review_score
+        type: DOUBLE
+        description: "Nota média de avaliação dos itens comercializados pelo vendedor (1.0 a 5.0)."
+        is_primary_key: false
+        is_foreign_key: false

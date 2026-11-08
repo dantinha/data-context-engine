@@ -1,0 +1,123 @@
+version: 2
+
+few_shot_examples:
+  - id: fs_01_faturamento_liquido
+    question: "Qual o faturamento líquido total dos pedidos entregues?"
+    sql: |
+      SELECT 
+          SUM(total_payment_value) AS net_revenue 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered';
+    resolved_metric_id: net_revenue
+    tables_used:
+      - marts.fct_orders
+    explanation: "Calcula o faturamento financeiro realizado somando total_payment_value apenas para pedidos entregues com sucesso (RN-02)."
+
+  - id: fs_02_top_5_clientes_ltv
+    question: "Quais são os 5 principais clientes em termos de LTV acumulado?"
+    sql: |
+      SELECT 
+          customer_unique_id, 
+          customer_city, 
+          customer_state, 
+          lifetime_value 
+      FROM marts.dim_customers 
+      ORDER BY lifetime_value DESC 
+      LIMIT 5;
+    resolved_metric_id: customer_ltv
+    tables_used:
+      - marts.dim_customers
+    explanation: "Consulta os clientes mais valiosos pelo lifetime_value pré-calculado na dimensão de clientes únicos (RN-01)."
+
+  - id: fs_03_ticket_medio_por_estado
+    question: "Qual é o ticket médio dos pedidos por estado do cliente?"
+    sql: |
+      SELECT 
+          c.customer_state, 
+          ROUND(AVG(o.total_order_value), 2) AS avg_order_value, 
+          COUNT(o.order_id) AS total_orders 
+      FROM marts.fct_orders o 
+      JOIN marts.dim_customers c 
+          ON o.customer_unique_id = c.customer_unique_id 
+      WHERE o.order_status = 'delivered' 
+      GROUP BY c.customer_state 
+      ORDER BY avg_order_value DESC;
+    resolved_metric_id: average_order_value
+    tables_used:
+      - marts.fct_orders
+      - marts.dim_customers
+    explanation: "Calcula o valor médio do pedido entregue agrupado por UF do cliente via join seguro por customer_unique_id."
+
+  - id: fs_04_top_vendedores_receita
+    question: "Quais são os 3 vendedores com maior receita gerada?"
+    sql: |
+      SELECT 
+          seller_id, 
+          seller_city, 
+          seller_state, 
+          total_revenue_generated 
+      FROM marts.dim_sellers 
+      ORDER BY total_revenue_generated DESC 
+      LIMIT 3;
+    resolved_metric_id: seller_revenue
+    tables_used:
+      - marts.dim_sellers
+    explanation: "Ordena os vendedores parceiros pela receita líquida total de mercadorias vendidas em pedidos entregues."
+
+  - id: fs_05_taxa_atraso_entrega
+    question: "Qual a taxa percentual de pedidos com atraso na entrega?"
+    sql: |
+      SELECT 
+          ROUND(100.0 * COUNT(CASE WHEN is_delayed THEN 1 END) / COUNT(*), 2) AS delay_rate_pct, 
+          COUNT(*) AS total_delivered_orders 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered';
+    resolved_metric_id: delivery_delay_rate
+    tables_used:
+      - marts.fct_orders
+    explanation: "Calcula a proporção de pedidos entregues cuja data real de entrega excedeu a data estimada informada (RN-05)."
+
+  - id: fs_06_receita_categoria_beleza
+    question: "Qual a receita de produtos da categoria beleza_saude em pedidos entregues?"
+    sql: |
+      SELECT 
+          p.category_name_pt, 
+          ROUND(SUM(oi.price), 2) AS category_revenue 
+      FROM marts.fct_order_items oi 
+      JOIN marts.dim_products p 
+          ON oi.product_id = p.product_id 
+      WHERE oi.is_delivered = TRUE 
+        AND p.category_name_pt = 'beleza_saude' 
+      GROUP BY p.category_name_pt;
+    resolved_metric_id: product_only_revenue
+    tables_used:
+      - marts.fct_order_items
+      - marts.dim_products
+    explanation: "Soma o valor unitário dos produtos (price sem frete) filtrando a categoria em português sem nulos (RN-04 e RN-06)."
+
+  - id: fs_07_media_dias_atraso
+    question: "Para pedidos que atrasaram, qual foi a média de dias de atraso?"
+    sql: |
+      SELECT 
+          ROUND(AVG(delay_days), 1) AS avg_delay_days, 
+          MAX(delay_days) AS max_delay_days 
+      FROM marts.fct_orders 
+      WHERE order_status = 'delivered' 
+        AND is_delayed = TRUE;
+    resolved_metric_id: avg_delay_days
+    tables_used:
+      - marts.fct_orders
+    explanation: "Filtra exclusivamente pedidos entregues com atraso e calcula a média aritmética de delay_days (RN-05)."
+
+  - id: fs_08_clientes_recompra
+    question: "Quantos clientes compraram mais de uma vez e qual o LTV total desse grupo?"
+    sql: |
+      SELECT 
+          COUNT(customer_unique_id) AS repeat_customers_count, 
+          ROUND(SUM(lifetime_value), 2) AS total_repeat_revenue 
+      FROM marts.dim_customers 
+      WHERE is_repeat_customer = TRUE;
+    resolved_metric_id: customer_order_count
+    tables_used:
+      - marts.dim_customers
+    explanation: "Utiliza a flag is_repeat_customer da dim_customers para quantificar clientes fiéis e seu LTV acumulado (RN-01)."

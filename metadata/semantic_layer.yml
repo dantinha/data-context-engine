@@ -1,0 +1,305 @@
+version: 2
+
+metrics:
+  - id: net_revenue
+    name: "Receita Líquida Realizada"
+    description: "Soma de total_payment_value em pedidos com status 'delivered' (RN-02). Representa o faturamento financeiro efetivo quitado pelos clientes."
+    canonical_sql: "SELECT SUM(total_payment_value) FROM marts.fct_orders WHERE order_status = 'delivered'"
+    base_table: marts.fct_orders
+    filters_required:
+      - "order_status = 'delivered'"
+    synonyms:
+      - "receita"
+      - "receita realizada"
+      - "receita liquida"
+      - "receita líquida"
+      - "faturamento"
+      - "faturamento realizado"
+      - "faturamento líquido"
+      - "total pago"
+      - "vendas entregues"
+
+  - id: gross_merchandise_value
+    name: "GMV (Gross Merchandise Value)"
+    description: "Volume bruto total transacionado (total_order_value) em pedidos confirmados para entrega ou já entregues ('delivered', 'shipped', 'invoiced')."
+    canonical_sql: "SELECT SUM(total_order_value) FROM marts.fct_orders WHERE order_status IN ('delivered', 'shipped', 'invoiced')"
+    base_table: marts.fct_orders
+    filters_required:
+      - "order_status IN ('delivered', 'shipped', 'invoiced')"
+    synonyms:
+      - "gmv"
+      - "faturamento bruto"
+      - "volume de vendas"
+      - "volume transacionado"
+      - "vendas totais"
+      - "gross merchandise value"
+
+  - id: product_only_revenue
+    name: "Receita Exclusiva de Produtos"
+    description: "Soma de total_items_price dos pedidos entregues, desconsiderando taxas de frete (RN-04)."
+    canonical_sql: "SELECT SUM(total_items_price) FROM marts.fct_orders WHERE order_status = 'delivered'"
+    base_table: marts.fct_orders
+    filters_required:
+      - "order_status = 'delivered'"
+    synonyms:
+      - "receita de produtos"
+      - "vendas de produtos"
+      - "valor de mercadorias"
+      - "faturamento sem frete"
+      - "receita sem frete"
+
+  - id: average_order_value
+    name: "Ticket Médio por Pedido"
+    description: "Valor médio pago por pedido entregue com sucesso."
+    canonical_sql: "SELECT ROUND(AVG(total_payment_value), 2) FROM marts.fct_orders WHERE order_status = 'delivered'"
+    base_table: marts.fct_orders
+    filters_required:
+      - "order_status = 'delivered'"
+    synonyms:
+      - "ticket medio"
+      - "ticket médio"
+      - "aov"
+      - "valor medio por pedido"
+      - "gasto medio por pedido"
+
+  - id: customer_ltv
+    name: "LTV do Cliente (Lifetime Value)"
+    description: "Valor acumulado de compras entregues por cliente utilizando customer_unique_id (RN-01)."
+    canonical_sql: "SELECT customer_unique_id, lifetime_value FROM marts.dim_customers"
+    base_table: marts.dim_customers
+    filters_required: []
+    synonyms:
+      - "ltv"
+      - "lifetime value"
+      - "valor do cliente"
+      - "cliente mais valioso"
+      - "top clientes ltv"
+
+  - id: customer_order_count
+    name: "Contagem de Pedidos por Cliente"
+    description: "Quantidade total de pedidos realizados por cliente único ao longo do tempo."
+    canonical_sql: "SELECT customer_unique_id, total_orders FROM marts.dim_customers"
+    base_table: marts.dim_customers
+    filters_required: []
+    synonyms:
+      - "frequencia de compra"
+      - "pedidos por cliente"
+      - "volume de compras por cliente"
+      - "cliente mais frequente"
+      - "top clientes volume"
+
+  - id: customer_avg_ticket
+    name: "Ticket Médio por Cliente"
+    description: "Gasto médio por pedido entregue para cada cliente único (lifetime_value / delivered_orders)."
+    canonical_sql: "SELECT customer_unique_id, avg_ticket FROM marts.dim_customers WHERE delivered_orders > 0"
+    base_table: marts.dim_customers
+    filters_required:
+      - "delivered_orders > 0"
+    synonyms:
+      - "ticket medio do cliente"
+      - "ticket médio do cliente"
+      - "gasto medio cliente"
+
+  - id: seller_revenue
+    name: "Receita Total Gerada pelo Vendedor"
+    description: "Faturamento gerado pelas vendas de produtos do parceiro em pedidos entregues."
+    canonical_sql: "SELECT seller_id, total_revenue_generated FROM marts.dim_sellers"
+    base_table: marts.dim_sellers
+    filters_required: []
+    synonyms:
+      - "receita do vendedor"
+      - "vendas do vendedor"
+      - "faturamento do seller"
+      - "top seller receita"
+
+  - id: seller_units_sold
+    name: "Unidades Vendidas pelo Vendedor"
+    description: "Quantidade total de itens comercializados pelo vendedor em pedidos entregues."
+    canonical_sql: "SELECT seller_id, total_items_sold FROM marts.dim_sellers"
+    base_table: marts.dim_sellers
+    filters_required: []
+    synonyms:
+      - "unidades vendidas"
+      - "itens vendidos pelo seller"
+      - "volume de vendas do seller"
+      - "top seller volume"
+
+  - id: seller_avg_review
+    name: "Avaliação Média do Vendedor"
+    description: "Nota média das avaliações dos clientes para os itens comercializados pelo vendedor."
+    canonical_sql: "SELECT seller_id, avg_review_score FROM marts.dim_sellers WHERE avg_review_score IS NOT NULL"
+    base_table: marts.dim_sellers
+    filters_required:
+      - "avg_review_score IS NOT NULL"
+    synonyms:
+      - "nota do vendedor"
+      - "avaliacao do seller"
+      - "satisfacao do vendedor"
+      - "melhor avaliado"
+
+  - id: delivery_delay_rate
+    name: "Taxa de Pedidos com Atraso"
+    description: "Proporção de pedidos entregues que sofreram atraso em relação à data estimada (RN-05)."
+    canonical_sql: "SELECT ROUND(100.0 * COUNT(CASE WHEN is_delayed THEN 1 END) / COUNT(*), 2) FROM marts.fct_orders WHERE order_status = 'delivered'"
+    base_table: marts.fct_orders
+    filters_required:
+      - "order_status = 'delivered'"
+    synonyms:
+      - "taxa de atraso"
+      - "pedidos atrasados"
+      - "percentual de atraso"
+      - "atraso na entrega"
+      - "pontualidade logistica"
+
+  - id: avg_delay_days
+    name: "Média de Dias de Atraso"
+    description: "Média de dias de atraso calculada exclusivamente sobre pedidos entregues que atrasaram (RN-05)."
+    canonical_sql: "SELECT ROUND(AVG(delay_days), 2) FROM marts.fct_orders WHERE order_status = 'delivered' AND is_delayed = TRUE"
+    base_table: marts.fct_orders
+    filters_required:
+      - "order_status = 'delivered'"
+      - "is_delayed = TRUE"
+    synonyms:
+      - "dias de atraso"
+      - "media de dias de atraso"
+      - "tempo medio de atraso"
+      - "atraso medio"
+
+ambiguity_groups:
+  - id: melhor_cliente
+    name: "Critério de Classificação de Top Clientes"
+    trigger_terms:
+      - "melhor cliente"
+      - "melhores clientes"
+      - "top clientes"
+      - "cliente mais valioso"
+      - "clientes vips"
+    description: "Solicitações sobre 'melhor cliente' exigem definir se o critério é receita acumulada (LTV), frequência de compra ou ticket médio."
+    candidate_metrics:
+      - customer_ltv
+      - customer_order_count
+      - customer_avg_ticket
+
+  - id: faturamento_receita
+    name: "Critério de Cálculo de Receita / Faturamento"
+    trigger_terms:
+      - "faturamento"
+      - "receita"
+      - "vendas"
+      - "ganhos"
+    description: "Perguntas de 'receita' ou 'vendas' podem se referir a pedidos entregues (líquido), GMV total incluindo faturados/despachados ou mercadoria sem frete."
+    candidate_metrics:
+      - net_revenue
+      - gross_merchandise_value
+      - product_only_revenue
+
+  - id: melhor_vendedor
+    name: "Critério de Classificação de Melhores Vendedores"
+    trigger_terms:
+      - "melhor vendedor"
+      - "melhores vendedores"
+      - "top sellers"
+      - "vendedor destaque"
+    description: "O conceito de 'melhor vendedor' pode priorizar faturamento financeiro gerado, volume físico de itens vendidos ou nota média de satisfação."
+    candidate_metrics:
+      - seller_revenue
+      - seller_units_sold
+      - seller_avg_review
+
+  - id: entrega_atraso
+    name: "Critério de Avaliação de Prazos e Entregas"
+    trigger_terms:
+      - "entrega"
+      - "atraso"
+      - "performance logística"
+      - "performance logistica"
+      - "prazo de entrega"
+    description: "Métricas logísticas variam entre a taxa percentual de pedidos atrasados e a severidade média em dias do atraso ocorrido."
+    candidate_metrics:
+      - delivery_delay_rate
+      - avg_delay_days
+
+business_rules:
+  - id: RN-01
+    name: "customer_id vs customer_unique_id"
+    description: "Na Olist, cada pedido gera um novo customer_id. Para métricas consolidadas por cliente (contagem distinta, LTV, frequência de recompra), deve-se usar OBRIGATORIAMENTE customer_unique_id da marts.dim_customers."
+    rule_sql_condition: "COUNT(DISTINCT customer_unique_id) em vez de COUNT(DISTINCT customer_id)"
+
+  - id: RN-02
+    name: "Status de Pedido em Receita Financeira"
+    description: "Pedidos com status 'canceled' ou 'unavailable' NÃO compõem receita realizada. Apenas pedidos 'delivered' entram nas métricas oficiais de faturamento líquido (net_revenue)."
+    rule_sql_condition: "order_status = 'delivered'"
+
+  - id: RN-03
+    name: "Prevenção de Fan-out em Joins Itens x Pagamentos"
+    description: "Um pedido pode conter múltiplos itens e múltiplos pagamentos. NUNCA realizar JOIN direto entre marts.fct_order_items e marts.fct_order_payments por order_id, pois isso multiplica linhas gerando produto cartesiano financeiro."
+    rule_sql_condition: "Consultar métricas consolidadas diretamente em marts.fct_orders"
+
+  - id: RN-04
+    name: "Componentes de Preço, Frete e Pagamento"
+    description: "Em fct_order_items, 'price' é o valor do item sem frete e 'freight_value' é o frete unitário. Em fct_orders, total_items_price soma produtos, total_freight_value soma fretes, total_order_value soma ambos e total_payment_value reflete o total transacionado."
+    rule_sql_condition: "total_order_value = total_items_price + total_freight_value"
+
+  - id: RN-05
+    name: "Regra Canônica de Atraso de Entrega"
+    description: "Um pedido é considerado atrasado exclusivamente quando order_status = 'delivered' e CAST(order_delivered_customer_date AS DATE) > CAST(order_estimated_delivery_date AS DATE). delivery_days e delay_days são NULL quando order_status != 'delivered'."
+    rule_sql_condition: "order_status = 'delivered' AND CAST(order_delivered_customer_date AS DATE) > CAST(order_estimated_delivery_date AS DATE)"
+
+  - id: RN-06
+    name: "Padronização de Categorias de Produtos"
+    description: "Em marts.dim_products, produtos possuem category_name_pt (fallback 'nao_informado') e category_name_en (fallback 'not_informed'). Não existem nulos nestas colunas."
+    rule_sql_condition: "COALESCE(category_name_pt, 'nao_informado') e COALESCE(category_name_en, 'not_informed')"
+
+  - id: RN-07
+    name: "Restrição de Schemas Analíticos"
+    description: "O warehouse possui schemas raw e staging não tratados para consumo analítico. Consultas analíticas e agentes de LLM DEVEM utilizar exclusivamente tabelas do schema marts."
+    rule_sql_condition: "TABLE_SCHEMA = 'marts'"
+
+relationships:
+  allowed_joins:
+    - from_table: marts.fct_orders
+      to_table: marts.dim_customers
+      join_type: many_to_one
+      on_clause: "marts.fct_orders.customer_unique_id = marts.dim_customers.customer_unique_id"
+      description: "Permite enriquecer pedidos com atributos demográficos e safra de clientes de forma segura."
+
+    - from_table: marts.fct_order_items
+      to_table: marts.fct_orders
+      join_type: many_to_one
+      on_clause: "marts.fct_order_items.order_id = marts.fct_orders.order_id"
+      description: "Permite associar detalhes do pedido ao item (atenção: não somar métricas do pedido em linhas de itens sem deduplicar)."
+
+    - from_table: marts.fct_order_items
+      to_table: marts.dim_products
+      join_type: many_to_one
+      on_clause: "marts.fct_order_items.product_id = marts.dim_products.product_id"
+      description: "Permite enriquecer itens vendidos com categorias e características físicas dos produtos."
+
+    - from_table: marts.fct_order_items
+      to_table: marts.dim_sellers
+      join_type: many_to_one
+      on_clause: "marts.fct_order_items.seller_id = marts.dim_sellers.seller_id"
+      description: "Permite associar vendedor parceiro aos itens comercializados."
+
+    - from_table: marts.fct_order_items
+      to_table: marts.dim_customers
+      join_type: many_to_one
+      on_clause: "marts.fct_order_items.customer_unique_id = marts.dim_customers.customer_unique_id"
+      description: "Ponte direta de 1 salto entre itens comprados e dimensão de clientes únicos."
+
+    - from_table: marts.fct_order_payments
+      to_table: marts.fct_orders
+      join_type: many_to_one
+      on_clause: "marts.fct_order_payments.order_id = marts.fct_orders.order_id"
+      description: "Permite analisar formas de pagamento e parcelamento associadas a pedidos."
+
+  forbidden_joins:
+    - from_table: marts.fct_order_items
+      to_table: marts.fct_order_payments
+      on_condition: "order_id"
+      reason: "RN-03: Join direto gera produto cartesiano (fan-out) multiplicando itens por parcelas e inflando métricas financeiras."
+
+    - from_table: marts.fct_orders
+      to_table: marts.dim_customers
+      on_condition: "customer_id"
+      reason: "RN-01: Usar sempre customer_unique_id para joins com dim_customers. customer_id é transacional e muda a cada pedido."
