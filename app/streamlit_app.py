@@ -1,7 +1,14 @@
 """Data Context Engine - Streamlit Analytical Workbench (Anti-AI Design Level 2)."""
 
 import json
+import sys
 from pathlib import Path
+
+# Ensure src/ is on sys.path for direct executions (e.g. Streamlit Community Cloud)
+ROOT_DIR = Path(__file__).resolve().parent.parent
+SRC_DIR = ROOT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
 import pandas as pd
 import streamlit as st
