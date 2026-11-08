@@ -38,6 +38,13 @@ class TestSQLGuardrailMaliciousQueries:
             "COPY marts.fct_orders TO 'out.csv'",
             "ATTACH 'other.db' AS other",
             "INSTALL httpfs; LOAD httpfs",
+            "SELECT * FROM '.env'",
+            "SELECT * FROM 'id_rsa'",
+            "SELECT * FROM 'credentials'",
+            "SELECT read_text('/etc/passwd')",
+            "SELECT * FROM scan_parquet('dump.parquet')",
+            "SELECT * FROM duckdb_secrets()",
+            "SELECT * INTO copy_table FROM marts.fct_orders",
             "INSERT INTO marts.fct_orders (order_id) VALUES ('fake')",
             "ALTER TABLE marts.fct_orders ADD COLUMN hacked INT",
             "SELECT glob('*.csv')",
@@ -163,3 +170,17 @@ class TestSafeSQLExecutor:
         assert res.security_violation is False
         assert res.error_message is not None
         assert "column_does_not_exist" in res.error_message.lower() or "not found" in res.error_message.lower() or "referenced" in res.error_message.lower()
+
+    def test_cte_shadowing_preserves_schema_qualified_physical_table(self):
+        guardrail = SQLGuardrail()
+        sql = "WITH fct_orders AS (SELECT order_id FROM marts.fct_orders) SELECT * FROM fct_orders"
+        res = guardrail.validate_and_rewrite(sql)
+        assert res.is_safe is True
+        assert "marts.fct_orders" in res.tables_referenced
+
+    def test_set_operation_union_execution(self, warehouse_db: Path):
+        executor = SafeSQLExecutor(db_path=warehouse_db)
+        sql = "SELECT 1 AS num UNION SELECT 2 AS num"
+        res = executor.execute(sql)
+        assert res.success is True
+        assert res.row_count == 2

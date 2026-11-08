@@ -38,6 +38,9 @@ _MUTATION_NODE_NAMES = [
     "Transaction",
     "Commit",
     "Rollback",
+    "Into",
+    "Merge",
+    "Truncate",
 ]
 
 MUTATION_NODES = tuple(
@@ -56,12 +59,20 @@ PROHIBITED_FUNCTIONS = {
     "read_csv",
     "read_csv_auto",
     "read_parquet",
+    "scan_parquet",
     "read_json",
     "read_json_auto",
+    "read_ndjson",
+    "read_ndjson_auto",
+    "read_text",
+    "read_blob",
+    "scan_csv",
+    "sniff_csv",
     "glob",
     "parquet_scan",
     "sqlite_scan",
     "postgres_scan",
+    "duckdb_secrets",
 }
 
 # File extensions that indicate a replacement scan or file reference
@@ -120,6 +131,25 @@ class SQLGuardrail:
                 )
 
         # SEC-03: Bloqueio de I/O de Arquivo e Replacement Scans
+        try:
+            tokens = sqlglot.tokenize(sql, read="duckdb")
+            str_types = {sqlglot.TokenType.STRING}
+            for attr in ("RAW_STRING", "HEREDOC_STRING", "NATIONAL_STRING"):
+                if hasattr(sqlglot.TokenType, attr):
+                    str_types.add(getattr(sqlglot.TokenType, attr))
+
+            for i in range(len(tokens) - 1):
+                if tokens[i].token_type in (sqlglot.TokenType.FROM, sqlglot.TokenType.JOIN):
+                    j = i + 1
+                    while j < len(tokens) and tokens[j].token_type == sqlglot.TokenType.COMMENT:
+                        j += 1
+                    if j < len(tokens) and tokens[j].token_type in str_types:
+                        raise SQLSecurityViolationError(
+                            f"Literal string used as table reference in FROM/JOIN (DuckDB replacement scan prohibited): '{tokens[j].text}' (SEC-03)."
+                        )
+        except errors.TokenError as err:
+            raise SQLSecurityViolationError(f"Tokenization error in SQL: {err} (SEC-01).") from err
+
         for node in parsed.walk():
             if isinstance(node, FILE_IO_NODES):
                 raise SQLSecurityViolationError(
@@ -144,14 +174,20 @@ class SQLGuardrail:
                 )
 
         for table in parsed.find_all(exp.Table):
+            # Replacement Scan detection: In DuckDB, literal strings as table names trigger file reads
+            if isinstance(table.this, exp.Literal):
+                raise SQLSecurityViolationError(
+                    f"Literal string used as table reference (DuckDB replacement scan prohibited): '{table.sql()}' (SEC-03)."
+                )
+
             tbl_name = (table.name or "").strip()
             tbl_sql = table.sql(dialect="duckdb").strip()
             db_name = (table.db or "").strip()
 
-            # Path separators check
-            if any(sep in tbl_name or sep in tbl_sql or sep in db_name for sep in ("/", "\\")):
+            # Path separators check or hidden file reference
+            if tbl_name.startswith(".") or any(sep in tbl_name or sep in tbl_sql or sep in db_name for sep in ("/", "\\")):
                 raise SQLSecurityViolationError(
-                    f"Prohibited path separator in table reference: '{tbl_name}' (SEC-03)."
+                    f"Prohibited path separator or hidden file in table reference: '{tbl_name}' (SEC-03)."
                 )
 
             # Prohibited extensions check
@@ -179,10 +215,10 @@ class SQLGuardrail:
             if not t_name:
                 continue
 
-            if t_name.lower() in cte_names_set:
+            schema_name = (table.db or "").strip()
+            if not schema_name and t_name.lower() in cte_names_set:
                 continue
 
-            schema_name = (table.db or "").strip()
             full_table_name = f"{schema_name}.{t_name}" if schema_name else t_name
 
             if full_table_name not in tables_referenced:
