@@ -35,7 +35,15 @@ def build_warehouse(
     datasets = generate_olist_sample(orders_count=sample_orders_count, seed=seed)
 
     con = duckdb.connect(str(path))
+    try:
+        _populate_warehouse(con, datasets)
+    finally:
+        con.close()
 
+    return path
+
+
+def _populate_warehouse(con: duckdb.DuckDBPyConnection, datasets: dict) -> None:
     # 1. Create schemas
     con.execute("CREATE SCHEMA IF NOT EXISTS raw;")
     con.execute("CREATE SCHEMA IF NOT EXISTS staging;")
@@ -321,6 +329,3 @@ def build_warehouse(
     LEFT JOIN marts.fct_order_items oi ON s.seller_id = oi.seller_id
     GROUP BY s.seller_id, s.seller_city, s.seller_state;
     """)
-
-    con.close()
-    return path
