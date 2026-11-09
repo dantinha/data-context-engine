@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L1",
+  "attempt": 0,
+  "question": "Quantos clientes únicos realizaram compras em 2017?",
+  "generated_sql": "SELECT COUNT(customer_id) AS clientes_2017 FROM raw.olist_orders_dataset WHERE EXTRACT(YEAR FROM CAST(order_purchase_timestamp AS TIMESTAMP)) = 2017;",
+  "reasoning": "L1 failure: counts ephemeral customer_id including canceled orders",
+  "confidence": 1.0
+}

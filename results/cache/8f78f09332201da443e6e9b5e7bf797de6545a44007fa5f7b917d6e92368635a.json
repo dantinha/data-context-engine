@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L1",
+  "attempt": 0,
+  "question": "Qual o valor médio do frete por estado?",
+  "generated_sql": "SELECT c.customer_state, ROUND(SUM(oi.freight_value), 2) AS total_freight_inflated, ROUND(AVG(oi.freight_value), 2) AS item_avg_freight FROM raw.olist_order_items_dataset oi JOIN raw.olist_orders_dataset o ON oi.order_id = o.order_id JOIN raw.olist_customers_dataset c ON o.customer_id = c.customer_id GROUP BY c.customer_state ORDER BY total_freight_inflated DESC LIMIT 10;",
+  "reasoning": "L1 failure: aggregates item-level freight without order status filter (RN-04 & RN-02 violation)",
+  "confidence": 1.0
+}

@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Qual o valor médio do frete por estado?",
+  "generated_sql": "SELECT c.customer_state, ROUND(AVG(o.total_freight_value), 2) AS avg_order_freight, COUNT(o.order_id) AS delivered_orders FROM marts.fct_orders o JOIN marts.dim_customers c ON o.customer_unique_id = c.customer_unique_id WHERE o.order_status = 'delivered' GROUP BY c.customer_state ORDER BY avg_order_freight DESC LIMIT 10;",
+  "reasoning": "Canonical L4 resolution calculating order-level average freight by state on delivered orders",
+  "confidence": 1.0
+}

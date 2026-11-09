@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Qual o tempo médio de entrega dos pedidos em São Paulo?",
+  "generated_sql": "SELECT c.customer_state, ROUND(AVG(o.delivery_days), 2) AS avg_delivery_days, ROUND(100.0 * SUM(CASE WHEN o.is_delayed THEN 1 ELSE 0 END) / COUNT(*), 2) AS delay_rate_pct, COUNT(*) AS delivered_orders FROM marts.fct_orders o JOIN marts.dim_customers c ON o.customer_unique_id = c.customer_unique_id WHERE o.order_status = 'delivered' AND c.customer_state = 'SP' GROUP BY c.customer_state;",
+  "reasoning": "Canonical L4 resolution for São Paulo delivery SLA and delay rate (RN-05)",
+  "confidence": 1.0
+}

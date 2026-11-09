@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Quem são os nossos melhores vendedores?",
+  "generated_sql": "SELECT seller_id, seller_state, ROUND(total_revenue_generated, 2) AS seller_revenue, total_items_sold FROM marts.dim_sellers ORDER BY total_revenue_generated DESC LIMIT 10;",
+  "reasoning": "Canonical L4 resolution for seller_revenue on marts.dim_sellers",
+  "confidence": 1.0
+}

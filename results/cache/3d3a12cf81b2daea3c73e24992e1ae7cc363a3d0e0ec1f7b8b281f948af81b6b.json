@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Quantos clientes únicos realizaram compras em 2017?",
+  "generated_sql": "SELECT COUNT(DISTINCT customer_unique_id) AS unique_customers_2017 FROM marts.fct_orders WHERE order_status = 'delivered' AND EXTRACT(YEAR FROM order_purchase_timestamp) = 2017;",
+  "reasoning": "Canonical L4 resolution counting distinct customer_unique_id on delivered 2017 orders",
+  "confidence": 1.0
+}

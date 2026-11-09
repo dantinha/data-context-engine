@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Qual o faturamento total da empresa?",
+  "generated_sql": "SELECT ROUND(SUM(total_payment_value), 2) AS net_delivered_revenue, COUNT(*) AS delivered_orders FROM marts.fct_orders WHERE order_status = 'delivered';",
+  "reasoning": "Canonical L4 resolution for net_revenue applying RN-02 (order_status = 'delivered')",
+  "confidence": 1.0
+}

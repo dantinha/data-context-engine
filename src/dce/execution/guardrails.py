@@ -1,10 +1,30 @@
+import re
 import sqlglot
 from pydantic import BaseModel, Field
 from sqlglot import errors, exp
 
 
+class _ViolationCode:
+    """Lightweight value holder for backward-compatible violation_type.value access."""
+
+    def __init__(self, value: str) -> None:
+        self.value = value
+
+    def __str__(self) -> str:
+        return self.value
+
+
 class SQLSecurityViolationError(Exception):
     """Raised when a SQL query violates security guardrails."""
+
+    def __init__(self, message: str, code: str | None = None) -> None:
+        super().__init__(message)
+        self.message = message
+        if code is None:
+            match = re.search(r"\b(SEC-0[1-5])\b", message)
+            code = match.group(1) if match else "SEC-01"
+        self.code = code
+        self.violation_type = _ViolationCode(code)
 
 
 class GuardrailResult(BaseModel):
@@ -15,6 +35,11 @@ class GuardrailResult(BaseModel):
     limit_applied: int | None = None
     governance_warnings: list[str] = Field(default_factory=list)
     violation_reason: str | None = None
+
+    @property
+    def tables_used(self) -> list[str]:
+        """Alias for tables_referenced for UI compatibility."""
+        return self.tables_referenced
 
 
 # Node types that represent mutations or admin actions in AST
@@ -73,6 +98,8 @@ PROHIBITED_FUNCTIONS = {
     "sqlite_scan",
     "postgres_scan",
     "duckdb_secrets",
+    "pg_sleep",
+    "sleep",
 }
 
 # File extensions that indicate a replacement scan or file reference
@@ -92,6 +119,10 @@ class SQLGuardrail:
 
     def __init__(self, default_schema: str = "marts") -> None:
         self.default_schema = default_schema
+
+    def validate_and_sanitize(self, sql: str, max_rows: int = 1000) -> GuardrailResult:
+        """Alias for validate_and_rewrite for UI compatibility."""
+        return self.validate_and_rewrite(sql, max_rows=max_rows)
 
     def validate_and_rewrite(self, sql: str, max_rows: int = 1000) -> GuardrailResult:
         """Validate SQL query against SEC-01..SEC-05 rules and inject safety limit."""

@@ -3,7 +3,7 @@
   "level": "L4",
   "attempt": 0,
   "question": "Quem são os nossos 10 melhores clientes?",
-  "generated_sql": "SELECT s.seller_id, COUNT(*) FROM marts.dim_sellers s GROUP BY s.seller_id LIMIT 5;",
-  "reasoning": "L4 failure: incomplete join structure for multi-condition seller aggregation",
+  "generated_sql": "SELECT customer_unique_id, customer_state, delivered_orders, ROUND(lifetime_value, 2) AS lifetime_value FROM marts.dim_customers WHERE delivered_orders > 0 ORDER BY lifetime_value DESC LIMIT 10;",
+  "reasoning": "Canonical L4 resolution using customer_lifetime_value on marts.dim_customers (RN-01 & RN-02)",
   "confidence": 1.0
 }

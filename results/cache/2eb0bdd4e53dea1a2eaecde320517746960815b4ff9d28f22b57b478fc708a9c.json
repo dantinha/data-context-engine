@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L4",
+  "attempt": 0,
+  "question": "Quem são os nossos 10 melhores clientes?",
+  "generated_sql": "SELECT customer_unique_id, customer_state, ROUND(avg_ticket, 2) AS avg_ticket, delivered_orders FROM marts.dim_customers WHERE delivered_orders > 0 ORDER BY avg_ticket DESC LIMIT 10;",
+  "reasoning": "Canonical L4 resolution using customer_avg_ticket on marts.dim_customers",
+  "confidence": 1.0
+}

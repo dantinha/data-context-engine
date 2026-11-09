@@ -82,10 +82,17 @@ class PlaybookStore:
         self,
         title: str,
         question: str,
-        sql_query: str,
+        sql_query: str = "",
         resolved_metric_id: str | None = None,
         tags: list[str] | None = None,
+        *,
+        sql: str | None = None,
+        description: str | None = None,
+        verified: bool = True,
     ) -> SavedPlaybook:
+        if not sql_query and sql:
+            sql_query = sql
+        _ = description, verified
         tables_used: list[str] = []
         sanitized_sql = sql_query
 

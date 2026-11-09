@@ -150,6 +150,18 @@ class ContextInspectionReport(BaseModel):
     few_shot_examples: list[RetrievedExampleInfo] = Field(default_factory=list)
     latency_ms: float = 0.0
 
+    @property
+    def static_prefix_tokens(self) -> int:
+        return self.prefix_cacheable_tokens
+
+    @property
+    def dynamic_suffix_tokens(self) -> int:
+        return max(0, self.assembled_context_tokens - self.prefix_cacheable_tokens)
+
+    @property
+    def selected_rules(self) -> list[str]:
+        return ["RN-01..RN-07"] if self.level in (ContextLevel.L3, ContextLevel.L4) else []
+
     @model_validator(mode="before")
     @classmethod
     def _sync_fields(cls, data: Any) -> Any:
@@ -196,16 +208,16 @@ class AssembledContext(BaseModel):
             elif "inspection_report" in data and "inspection" not in data:
                 data["inspection"] = data["inspection_report"]
 
-            # static_prefix <-> system_prompt
-            if "static_prefix" in data and not data.get("system_prompt"):
-                data["system_prompt"] = data["static_prefix"]
-            elif "system_prompt" in data and not data.get("static_prefix"):
-                data["static_prefix"] = data["system_prompt"]
-
             # full_prompt synthesis if missing
             if not data.get("full_prompt") and (data.get("static_prefix") or data.get("dynamic_suffix")):
                 p = f"{data.get('static_prefix', '')}\n\n{data.get('dynamic_suffix', '')}".strip()
                 data["full_prompt"] = p
+
+            # static_prefix <-> system_prompt
+            if not data.get("system_prompt"):
+                data["system_prompt"] = data.get("static_prefix") or data.get("full_prompt", "")
+            elif "system_prompt" in data and not data.get("static_prefix"):
+                data["static_prefix"] = data["system_prompt"]
         return data
 
 
@@ -229,6 +241,7 @@ class GeneratedSQLResponse(BaseModel):
     sanitized_sql: str
     reasoning: str = ""
     confidence: float = 1.0
+    tables_used: list[str] = Field(default_factory=list)
 
 
 class QueryTurnResult(BaseModel):
@@ -299,6 +312,14 @@ class MetricMetadata(BaseModel):
     base_table: str
     filters_required: list[str] = Field(default_factory=list)
     synonyms: list[str] = Field(default_factory=list)
+
+    @property
+    def sql_expression(self) -> str:
+        return self.canonical_sql
+
+    @property
+    def business_rules(self) -> list[str]:
+        return self.filters_required
 
 
 class AmbiguityGroup(BaseModel):

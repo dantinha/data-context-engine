@@ -1,0 +1,9 @@
+{
+  "model_name": "gemini-2.5-flash",
+  "level": "L1",
+  "attempt": 0,
+  "question": "Quem são os nossos 10 melhores clientes?",
+  "generated_sql": "SELECT customer_id, COUNT(order_id) AS total_orders FROM raw.olist_orders_dataset GROUP BY customer_id ORDER BY total_orders DESC LIMIT 10;",
+  "reasoning": "L1 failure: groups by ephemeral transactional customer_id instead of customer_unique_id (RN-01 violation)",
+  "confidence": 1.0
+}
