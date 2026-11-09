@@ -16,7 +16,6 @@ if str(SRC_DIR) not in sys.path:
 import pandas as pd
 import streamlit as st
 
-from dce.benchmark.runner import BenchmarkRunner
 from dce.context.assembler import ContextAssembler
 from dce.context.clarifier import SemanticClarifier
 from dce.context.loader import load_metadata_catalog
@@ -24,7 +23,7 @@ from dce.context.retriever import HybridRetriever
 from dce.execution.agent import SQLAgent
 from dce.execution.executor import SafeSQLExecutor
 from dce.execution.guardrails import SQLGuardrail, SQLSecurityViolationError
-from dce.models import ContextLevel, MetadataCatalog, SavedPlaybook
+from dce.models import ContextLevel, MetadataCatalog
 from dce.playbooks.store import PlaybookStore
 from dce.warehouse.builder import build_warehouse
 

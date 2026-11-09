@@ -166,25 +166,25 @@ class SQLAgent:
         ):
             if level == ContextLevel.L1:
                 return (
-                    "SELECT customer_id, COUNT(order_id) AS total_orders "
-                    "FROM raw.olist_orders_dataset GROUP BY customer_id ORDER BY total_orders DESC LIMIT 10;",
+                    ("SELECT customer_id, COUNT(order_id) AS total_orders "
+                    "FROM raw.olist_orders_dataset GROUP BY customer_id ORDER BY total_orders DESC LIMIT 10;"),
                     "L1 failure: groups by ephemeral transactional customer_id instead of customer_unique_id (RN-01 violation)",
                 )
             if selected_metric_id == "customer_order_frequency":
                 return (
-                    "SELECT customer_unique_id, customer_state, delivered_orders, lifetime_value "
-                    "FROM marts.dim_customers WHERE delivered_orders > 0 ORDER BY delivered_orders DESC, lifetime_value DESC LIMIT 10;",
+                    ("SELECT customer_unique_id, customer_state, delivered_orders, lifetime_value "
+                    "FROM marts.dim_customers WHERE delivered_orders > 0 ORDER BY delivered_orders DESC, lifetime_value DESC LIMIT 10;"),
                     "Canonical L4 resolution using customer_order_frequency on marts.dim_customers",
                 )
             if selected_metric_id == "customer_avg_ticket":
                 return (
-                    "SELECT customer_unique_id, customer_state, ROUND(avg_ticket, 2) AS avg_ticket, delivered_orders "
-                    "FROM marts.dim_customers WHERE delivered_orders > 0 ORDER BY avg_ticket DESC LIMIT 10;",
+                    ("SELECT customer_unique_id, customer_state, ROUND(avg_ticket, 2) AS avg_ticket, delivered_orders "
+                    "FROM marts.dim_customers WHERE delivered_orders > 0 ORDER BY avg_ticket DESC LIMIT 10;"),
                     "Canonical L4 resolution using customer_avg_ticket on marts.dim_customers",
                 )
             return (
-                "SELECT customer_unique_id, customer_state, delivered_orders, ROUND(lifetime_value, 2) AS lifetime_value "
-                "FROM marts.dim_customers WHERE delivered_orders > 0 ORDER BY lifetime_value DESC LIMIT 10;",
+                ("SELECT customer_unique_id, customer_state, delivered_orders, ROUND(lifetime_value, 2) AS lifetime_value "
+                "FROM marts.dim_customers WHERE delivered_orders > 0 ORDER BY lifetime_value DESC LIMIT 10;"),
                 "Canonical L4 resolution using customer_lifetime_value on marts.dim_customers (RN-01 & RN-02)",
             )
 
@@ -192,13 +192,13 @@ class SQLAgent:
         if "2017" in norm_q and "clientes" in norm_q:
             if level == ContextLevel.L1:
                 return (
-                    "SELECT COUNT(customer_id) AS clientes_2017 "
-                    "FROM raw.olist_orders_dataset WHERE EXTRACT(YEAR FROM CAST(order_purchase_timestamp AS TIMESTAMP)) = 2017;",
+                    ("SELECT COUNT(customer_id) AS clientes_2017 "
+                    "FROM raw.olist_orders_dataset WHERE EXTRACT(YEAR FROM CAST(order_purchase_timestamp AS TIMESTAMP)) = 2017;"),
                     "L1 failure: counts ephemeral customer_id including canceled orders",
                 )
             return (
-                "SELECT COUNT(DISTINCT customer_unique_id) AS unique_customers_2017 "
-                "FROM marts.fct_orders WHERE order_status = 'delivered' AND EXTRACT(YEAR FROM order_purchase_timestamp) = 2017;",
+                ("SELECT COUNT(DISTINCT customer_unique_id) AS unique_customers_2017 "
+                "FROM marts.fct_orders WHERE order_status = 'delivered' AND EXTRACT(YEAR FROM order_purchase_timestamp) = 2017;"),
                 "Canonical L4 resolution counting distinct customer_unique_id on delivered 2017 orders",
             )
 
@@ -206,21 +206,21 @@ class SQLAgent:
         if "frete" in norm_q and "estado" in norm_q:
             if level == ContextLevel.L1:
                 return (
-                    "SELECT c.customer_state, ROUND(SUM(oi.freight_value), 2) AS total_freight_inflated, "
+                    ("SELECT c.customer_state, ROUND(SUM(oi.freight_value), 2) AS total_freight_inflated, "
                     "ROUND(AVG(oi.freight_value), 2) AS item_avg_freight "
                     "FROM raw.olist_order_items_dataset oi "
                     "JOIN raw.olist_orders_dataset o ON oi.order_id = o.order_id "
                     "JOIN raw.olist_customers_dataset c ON o.customer_id = c.customer_id "
-                    "GROUP BY c.customer_state ORDER BY total_freight_inflated DESC LIMIT 10;",
+                    "GROUP BY c.customer_state ORDER BY total_freight_inflated DESC LIMIT 10;"),
                     "L1 failure: aggregates item-level freight without order status filter (RN-04 & RN-02 violation)",
                 )
             return (
-                "SELECT c.customer_state, ROUND(AVG(o.total_freight_value), 2) AS avg_order_freight, "
+                ("SELECT c.customer_state, ROUND(AVG(o.total_freight_value), 2) AS avg_order_freight, "
                 "COUNT(o.order_id) AS delivered_orders "
                 "FROM marts.fct_orders o "
                 "JOIN marts.dim_customers c ON o.customer_unique_id = c.customer_unique_id "
                 "WHERE o.order_status = 'delivered' "
-                "GROUP BY c.customer_state ORDER BY avg_order_freight DESC LIMIT 10;",
+                "GROUP BY c.customer_state ORDER BY avg_order_freight DESC LIMIT 10;"),
                 "Canonical L4 resolution calculating order-level average freight by state on delivered orders",
             )
 
@@ -238,29 +238,29 @@ class SQLAgent:
                 )
             if selected_metric_id == "avg_delay_days_when_late":
                 return (
-                    "SELECT c.customer_state, ROUND(AVG(o.delay_days), 2) AS avg_delay_days_when_late, "
+                    ("SELECT c.customer_state, ROUND(AVG(o.delay_days), 2) AS avg_delay_days_when_late, "
                     "COUNT(*) AS delayed_orders "
                     "FROM marts.fct_orders o "
                     "JOIN marts.dim_customers c ON o.customer_unique_id = c.customer_unique_id "
                     "WHERE o.order_status = 'delivered' AND o.is_delayed = TRUE "
-                    "GROUP BY c.customer_state ORDER BY avg_delay_days_when_late DESC LIMIT 10;",
+                    "GROUP BY c.customer_state ORDER BY avg_delay_days_when_late DESC LIMIT 10;"),
                     "Canonical L4 resolution for avg_delay_days_when_late (RN-05)",
                 )
             if "são paulo" in norm_q or " sp" in norm_q:
                 return (
-                    "SELECT c.customer_state, ROUND(AVG(o.delivery_days), 2) AS avg_delivery_days, "
+                    ("SELECT c.customer_state, ROUND(AVG(o.delivery_days), 2) AS avg_delivery_days, "
                     "ROUND(100.0 * SUM(CASE WHEN o.is_delayed THEN 1 ELSE 0 END) / COUNT(*), 2) AS delay_rate_pct, "
                     "COUNT(*) AS delivered_orders "
                     "FROM marts.fct_orders o "
                     "JOIN marts.dim_customers c ON o.customer_unique_id = c.customer_unique_id "
                     "WHERE o.order_status = 'delivered' AND c.customer_state = 'SP' "
-                    "GROUP BY c.customer_state;",
+                    "GROUP BY c.customer_state;"),
                     "Canonical L4 resolution for São Paulo delivery SLA and delay rate (RN-05)",
                 )
             return (
-                "SELECT ROUND(100.0 * SUM(CASE WHEN is_delayed THEN 1 ELSE 0 END) / COUNT(*), 2) AS delay_rate_pct, "
+                ("SELECT ROUND(100.0 * SUM(CASE WHEN is_delayed THEN 1 ELSE 0 END) / COUNT(*), 2) AS delay_rate_pct, "
                 "ROUND(AVG(delivery_days), 2) AS avg_delivery_days, COUNT(*) AS delivered_orders "
-                "FROM marts.fct_orders WHERE order_status = 'delivered';",
+                "FROM marts.fct_orders WHERE order_status = 'delivered';"),
                 "Canonical L4 resolution for delivery_delay_rate (RN-05)",
             )
 
@@ -276,50 +276,50 @@ class SQLAgent:
                 )
             if selected_metric_id == "seller_units_sold":
                 return (
-                    "SELECT seller_id, seller_state, total_items_sold, ROUND(total_revenue_generated, 2) AS total_revenue "
-                    "FROM marts.dim_sellers ORDER BY total_items_sold DESC LIMIT 10;",
+                    ("SELECT seller_id, seller_state, total_items_sold, ROUND(total_revenue_generated, 2) AS total_revenue "
+                    "FROM marts.dim_sellers ORDER BY total_items_sold DESC LIMIT 10;"),
                     "Canonical L4 resolution for seller_units_sold on marts.dim_sellers",
                 )
             if selected_metric_id == "seller_review_rating":
                 return (
-                    "SELECT seller_id, seller_state, ROUND(avg_review_score, 2) AS avg_review_score, total_orders_sold "
-                    "FROM marts.dim_sellers WHERE total_orders_sold >= 5 ORDER BY avg_review_score DESC, total_orders_sold DESC LIMIT 10;",
+                    ("SELECT seller_id, seller_state, ROUND(avg_review_score, 2) AS avg_review_score, total_orders_sold "
+                    "FROM marts.dim_sellers WHERE total_orders_sold >= 5 ORDER BY avg_review_score DESC, total_orders_sold DESC LIMIT 10;"),
                     "Canonical L4 resolution for seller_review_rating on marts.dim_sellers",
                 )
             return (
-                "SELECT seller_id, seller_state, ROUND(total_revenue_generated, 2) AS seller_revenue, total_items_sold "
-                "FROM marts.dim_sellers ORDER BY total_revenue_generated DESC LIMIT 10;",
+                ("SELECT seller_id, seller_state, ROUND(total_revenue_generated, 2) AS seller_revenue, total_items_sold "
+                "FROM marts.dim_sellers ORDER BY total_revenue_generated DESC LIMIT 10;"),
                 "Canonical L4 resolution for seller_revenue on marts.dim_sellers",
             )
 
         # 6. Faturamento / Receita / Default
         if level == ContextLevel.L1:
             return (
-                "SELECT ROUND(SUM(payment_value), 2) AS total_revenue_naive_l1 "
-                "FROM raw.olist_order_payments_dataset;",
+                ("SELECT ROUND(SUM(payment_value), 2) AS total_revenue_naive_l1 "
+                "FROM raw.olist_order_payments_dataset;"),
                 "L1 failure: queries raw payments table ignoring delivered order status (RN-02 violation)",
             )
         if level == ContextLevel.L2:
             return (
-                "SELECT ROUND(SUM(total_payment_value), 2) AS unverified_revenue "
-                "FROM marts.fct_orders;",
+                ("SELECT ROUND(SUM(total_payment_value), 2) AS unverified_revenue "
+                "FROM marts.fct_orders;"),
                 "L2 failure: queries marts.fct_orders but omits RN-02 filter order_status = 'delivered'",
             )
         if selected_metric_id == "gross_merchandise_value":
             return (
-                "SELECT ROUND(SUM(total_order_value), 2) AS gross_merchandise_value, COUNT(*) AS eligible_orders "
-                "FROM marts.fct_orders WHERE order_status IN ('delivered', 'shipped', 'invoiced');",
+                ("SELECT ROUND(SUM(total_order_value), 2) AS gross_merchandise_value, COUNT(*) AS eligible_orders "
+                "FROM marts.fct_orders WHERE order_status IN ('delivered', 'shipped', 'invoiced');"),
                 "Canonical L4 resolution for gross_merchandise_value (GMV)",
             )
         if selected_metric_id == "product_only_revenue":
             return (
-                "SELECT ROUND(SUM(total_items_price), 2) AS product_only_revenue, COUNT(*) AS delivered_orders "
-                "FROM marts.fct_orders WHERE order_status = 'delivered';",
+                ("SELECT ROUND(SUM(total_items_price), 2) AS product_only_revenue, COUNT(*) AS delivered_orders "
+                "FROM marts.fct_orders WHERE order_status = 'delivered';"),
                 "Canonical L4 resolution for product_only_revenue (excluding freight)",
             )
         return (
-            "SELECT ROUND(SUM(total_payment_value), 2) AS net_delivered_revenue, COUNT(*) AS delivered_orders "
-            "FROM marts.fct_orders WHERE order_status = 'delivered';",
+            ("SELECT ROUND(SUM(total_payment_value), 2) AS net_delivered_revenue, COUNT(*) AS delivered_orders "
+            "FROM marts.fct_orders WHERE order_status = 'delivered';"),
             "Canonical L4 resolution for net_revenue applying RN-02 (order_status = 'delivered')",
         )
 
