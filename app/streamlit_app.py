@@ -334,7 +334,7 @@ STEP_OPTIONS = [
 with st.sidebar:
     st.markdown("### ⚡ DATA CONTEXT ENGINE")
     st.markdown(
-        "<span class='badge-pill badge-indigo'>v0.1.0 · DuckDB Sandbox</span> "
+        "<span class='badge-pill badge-indigo'>v0.1.1 · DuckDB Sandbox</span> "
         "<span class='badge-pill badge-emerald'>Read-Only</span>",
         unsafe_allow_html=True,
     )
