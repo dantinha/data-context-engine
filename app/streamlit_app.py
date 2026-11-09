@@ -727,23 +727,25 @@ def render_section_workbench():
     )
 
     # Semantic Clarification Check
-    clarification = clarifier.clarify(user_input)
+    clarification = clarifier.analyze(user_input)
     if clarification.needs_clarification:
+        msg = clarification.message or clarification.clarification_message or "A pergunta contém termos ambíguos de negócio."
+        group_id = clarification.ambiguity_group_id or "MÉTRICA AMBÍGUA"
         st.markdown(
             f"""
             <div class='clarification-box'>
                 <div style='font-weight:700; color:#fbbf24; font-size:13px; margin-bottom:4px;'>
-                    ⚠️ Desambiguação Semântica Necessária ({clarification.ambiguity_type.upper()})
+                    ⚠️ Desambiguação Semântica Necessária ({group_id.upper()})
                 </div>
                 <div style='font-size:13.5px; color:#e2e8f0;'>
-                    {clarification.clarification_prompt}
+                    {msg}
                 </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
         if clarification.options:
-            metric_options = {opt.metric_id: f"{opt.metric_name} — {opt.description}" for opt in clarification.options}
+            metric_options = {opt.metric_id: f"{opt.label} — {opt.description}" for opt in clarification.options}
             selected_metric = st.radio(
                 "Selecione o critério de negócio desejado:",
                 options=list(metric_options.keys()),

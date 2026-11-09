@@ -39,6 +39,11 @@ def test_semantic_clarifier_ambiguity_detection(clarifier):
     assert res.question == question
     assert len(res.options) == 3
 
+    # Also verify clarify alias works identically
+    res_alias = clarifier.clarify(question)
+    assert res_alias.needs_clarification is True
+    assert res_alias.ambiguity_group_id == "melhor_cliente"
+
     option_ids = [opt.metric_id for opt in res.options]
     assert option_ids == ["customer_ltv", "customer_order_count", "customer_avg_ticket"]
 

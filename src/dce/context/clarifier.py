@@ -149,3 +149,8 @@ class SemanticClarifier:
             question=question,
             resolved_metric_id=None,
         )
+
+    def clarify(self, question: str, selected_metric_id: str | None = None) -> ClarificationRequest:
+        """Alias for analyze() to ensure backward compatibility."""
+        return self.analyze(question, selected_metric_id=selected_metric_id)
+
