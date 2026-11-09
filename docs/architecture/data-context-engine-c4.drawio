@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2026-11-08T13:18:00.000Z" agent="Antigravity" version="24.0.0" type="device">
+<mxfile host="app.diagrams.net" modified="2026-11-08T13:18:00.000Z" agent="draw.io" version="24.0.0" type="device">
   <diagram name="Data Context Engine - Architecture &amp; Epics Flow" id="dce-c4-arch">
     <mxGraphModel dx="1420" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
       <root>
@@ -66,7 +66,7 @@
         <mxCell id="e4_playbook" value="⭐ Salvar Processo Recorrente&#xa;(Playbook Feedback Loop)&#xa;Persiste análise validada e retroalimenta&#xa;o pool de Few-Shot automaticamente!" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ecfdf5;strokeColor=#059669;fontColor=#065f46;fontStyle=1;" vertex="1" parent="epic4">
           <mxGeometry x="25" y="195" width="290" height="95" as="geometry" />
         </mxCell>
-        <mxCell id="e4_mcp" value="MCP Server (FastMCP SDK)&#xa;6 Tools para Claude Desktop,&#xa;Antigravity IDE e Cursor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#334155;fontColor=#0f172a;fontStyle=1;" vertex="1" parent="epic4">
+        <mxCell id="e4_mcp" value="MCP Server (FastMCP SDK)&#xa;7 Tools para Claude Desktop,&#xa;VS Code e Cursor IDE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#334155;fontColor=#0f172a;fontStyle=1;" vertex="1" parent="epic4">
           <mxGeometry x="25" y="330" width="290" height="90" as="geometry" />
         </mxCell>
 

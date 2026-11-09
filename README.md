@@ -1,14 +1,23 @@
 # Data Context Engine (DCE) ⚡
 
+[![Live Demo](https://img.shields.io/badge/Live_App-data--context--engine.streamlit.app-6366f1.svg?style=for-the-badge&logo=streamlit)](https://data-context-engine.streamlit.app)
+[![Benchmark](https://img.shields.io/badge/Benchmark-90.0%25%20Acurácia%20(27%2F30)-10b981.svg?style=for-the-badge)](results/benchmark_summary.json)
+[![Tokens](https://img.shields.io/badge/Tokens-61.3%25_Savings-3b82f6.svg?style=for-the-badge)](results/benchmark_summary.json)
+[![Tests](https://img.shields.io/badge/Tests-83%20passed%20(100%25)-success.svg?style=for-the-badge)](#-test-suite--quality-assurance)
+
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![DuckDB](https://img.shields.io/badge/DuckDB-1.0+-yellow.svg)](https://duckdb.org/)
 [![FastMCP](https://img.shields.io/badge/MCP-FastMCP_2.x-brightgreen.svg)](https://modelcontextprotocol.io/)
 [![SQLGlot](https://img.shields.io/badge/AST_Guardrails-SQLGlot-orange.svg)](https://github.com/tobymao/sqlglot)
-[![Streamlit](https://img.shields.io/badge/UI-Anti--AI_Design-indigo.svg)](https://streamlit.io/)
-[![Tests](https://img.shields.io/badge/Tests-76%20passed%20(100%25)-success.svg)](#-test-suite--quality-assurance)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > **Context-aware Semantic Layer, Active Clarification, Prefix Caching, and Hardened AST SQL Guardrails for Analytical Warehouses.**
+
+---
+
+### 📢 Navegação Rápida
+- 🚀 **[The Executive Pitch Document](docs/PITCH.md)** — A visão completa do produto, antes e depois, e competências de engenharia demonstradas.
+- 📱 **[Aplicação Interativa Online (Streamlit Cloud)](https://data-context-engine.streamlit.app)** — Duelo L1 vs L4, Workbench com Clarifier e Simulador de Ataques AST.
 
 ---
 
@@ -155,7 +164,7 @@ O DCE é completamente autocontido e funciona **100% offline via Replay Cache de
 ### 1. Clonar e Configurar o Ambiente
 
 ```bash
-git clone https://github.com/gabriel/data-context-engine.git
+git clone https://github.com/dantinha/data-context-engine.git
 cd data-context-engine
 
 # Instalar dependências no ambiente virtual Python 3.12
@@ -199,7 +208,7 @@ pytest tests/ -v
 ruff check src/ tests/ app/
 ```
 
-- **76 testes automatizados** cobrindo:
+- **83 testes automatizados** cobrindo:
   - `test_warehouse.py`: Geração de dados, traps de negócio e esquemas normalizados/analíticos.
   - `test_semantic_metadata.py`: Integridade do catálogo YAML, métricas e forbidden joins.
   - `test_clarifier_retriever.py`: Desambiguação semântica, expansão de grafo relacional e ranking BM25.
@@ -208,6 +217,7 @@ ruff check src/ tests/ app/
   - `test_benchmark_agent.py`: Comparador tolerante a float/permutação, gold questions e ausência de leakage.
   - `test_playbooks.py`: Persistência de playbooks, hot-reload e isolamento do benchmark.
   - `test_mcp_server.py`: Todas as 7 ferramentas MCP e registro de servidor assíncrono.
+  - `test_streamlit_ui_usability.py`: Testes E2E de usabilidade da interface (Scroll Contínuo, Stepper, Duelo, Workbench e Guardrails AST).
 
 ---
 

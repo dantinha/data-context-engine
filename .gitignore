@@ -51,9 +51,10 @@ Thumbs.db
 # Testing & Tool caches
 .pytest_cache/
 .ruff_cache/
-.superpowers/
 
-# Secrets & Environment variables
+# Secrets, Private Notes & Environment variables
 .env
 *.local
 credentials.json
+*INTERVIEW_GUIDE*
+*PRIVATE*
