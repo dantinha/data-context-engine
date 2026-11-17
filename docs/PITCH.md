@@ -3,9 +3,9 @@
 > **Context Engineering is the missing architectural layer between Enterprise Data Warehouses and Autonomous AI Agents.**
 
 [![Live Demo](https://img.shields.io/badge/Demo_Online-data--context--engine.streamlit.app-indigo?style=for-the-badge&logo=streamlit)](https://data-context-engine.streamlit.app)
-[![Benchmark](https://img.shields.io/badge/Accuracy-90%25%20(27%2F30%20Gold)-emerald?style=for-the-badge)](results/benchmark_summary.json)
-[![Tokens](https://img.shields.io/badge/Token_Savings--61.3%25%20vs%20L1-blue?style=for-the-badge)](results/benchmark_summary.json)
-[![AST Security](https://img.shields.io/badge/AST_Guardrails-Zero_SQL_Injections-orange?style=for-the-badge)](src/dce/execution/guardrails.py)
+[![Benchmark](https://img.shields.io/badge/Accuracy-86.7%25%20(26%2F30%20Gold)-emerald?style=for-the-badge)](../results/benchmark_summary.json)
+[![Tokens](https://img.shields.io/badge/Token_Savings--61.3%25%20vs%20L1-blue?style=for-the-badge)](../results/benchmark_summary.json)
+[![AST Security](https://img.shields.io/badge/AST_Guardrails-Zero_SQL_Injections-orange?style=for-the-badge)](../src/dce/execution/guardrails.py)
 
 ---
 
@@ -57,11 +57,11 @@ Tested on a production-grade Brazilian E-commerce dataset (Olist, 100,000 orders
 
 | Level | Strategy | Accuracy (Single-Shot) | Accuracy (Self-Correction) | Avg Tokens | Token Savings vs L1 | Prefix Cacheable |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
-| **L0** | Zero-Shot Guessing | 13.3% (4/30) | 20.0% (6/30) | 498 | 90.7% | 0.0% |
-| **L1** | Naive Full Schema Dump | 33.3% (10/30) | 40.0% (12/30) | 5,861 | 0.0% (Base) | 0.0% |
-| **L2** | Curated Marts + Pruning | 53.3% (16/30) | 60.0% (18/30) | 1,269 | 76.3% | 48.2% |
-| **L3** | Semantic Routing & Graphs | 70.0% (21/30) | 76.7% (23/30) | 3,065 | 42.7% | 54.1% |
-| **L4** | **Data Context Engine** | **83.3% (25/30)** | **90.0% (27/30)** | **2,070** | **-61.3%** | **62.8%** |
+| **L0** | Zero-Shot Guessing | 13.3% (4/30) | 16.7% (5/30) | 498 | 90.7% | 0.0% |
+| **L1** | Naive Full Schema Dump | 33.3% (10/30) | 36.7% (11/30) | 5,861 | 0.0% (Base) | 0.0% |
+| **L2** | Curated Marts + Pruning | 53.3% (16/30) | 56.7% (17/30) | 1,269 | 76.3% | 48.2% |
+| **L3** | Semantic Routing & Graphs | 70.0% (21/30) | 73.3% (22/30) | 3,065 | 42.7% | 54.1% |
+| **L4** | **Data Context Engine** | **83.3% (25/30)** | **86.7% (26/30)** | **2,070** | **-61.3%** | **62.8%** |
 
 ---
 
